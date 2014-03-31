@@ -1,0 +1,14 @@
+Root.Head.Header;Root.Row.ExtraTag;Root.Row.Data.Data1;Root.Row.Data.SubData.SubData1;Root.Row.Data.ExtraBlock.ExtraElement;Root.Row.Data.AddAmount;Root.Row.Data.Date;Root.Row.AddDate
+H1;;;;;;;
+H2;;;;;;;
+H3;;;;;;;
+;;;SD1a;;;;
+;;;SD1b;;;;
+;;;;ee1;;;
+;;;;ee2;;;
+;;;;;12;;
+;ExtraValue1;a;SD2a;;;;2001-01-01
+;ExtraValue1;b;SD3a;;;;2001-01-01
+;ExtraValue1;b;SD3b;;;;2001-01-01
+;ExtraValue1;b;SD3c;;;;2001-01-01
+;ExtraValue2;;;;;2014-01-11;

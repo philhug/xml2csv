@@ -1,0 +1,6 @@
+-- Sample positive filter file, UTF-8 encoded. List of composite or leaf XPaths.
+
+Root.Row.Data.Data0
+Root.Row.Data.Amount
+Root.Row.Date
+Root.Row.Other
