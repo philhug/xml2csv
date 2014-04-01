@@ -51,7 +51,7 @@ public abstract class XML2CSVMisc
   /** The class name to display in messages. */
   public static final String DISPLAY_CLASS_NAME = "XML2CSV";
 
-  /** The the expected Log4J logger. */
+  /** The expected Log4J logger. */
   public static final String LOG4J_LOGGER = "XML2CSV-Generic-Converter";
 
   /** The default Log4J configuration file. */
@@ -65,12 +65,6 @@ public abstract class XML2CSVMisc
 
   /** The starting directory. */
   public static String START_DIRECTORY = System.getProperty("user.dir");
-
-  /** Raw optimization mode indicator. */
-  public static boolean RAW_MODE = false;
-
-  /** Extensive optimization mode indicator. */
-  public static boolean EXTENSIVE_MODE = false;
 
   /** The default blend CSV output file name. */
   public static final String DEFAULT_BLEND_OUTPUT_FILENAME = "output.csv";
