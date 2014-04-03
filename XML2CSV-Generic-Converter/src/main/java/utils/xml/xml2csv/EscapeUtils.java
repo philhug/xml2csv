@@ -10,9 +10,14 @@
  *******************************************************************************/
 package utils.xml.xml2csv;
 
+import utils.xml.xml2csv.constants.XML2CSVMisc;
+
 /**
- * Utility class for preparing strings for display by escaping the necessary characters.<br>
- * Comes in handy in order to escape XML 1.0 "<i>character entities</i>" in strings properly.
+ * Utility class which prepares strings by escaping the necessary characters for proper XML/CSV handling:<br>
+ * <ul>
+ * <li>XML: escape of XML 1.0 "<i>character entities</i>" in strings;
+ * <li>CSV: escape by means of surrounding double quotes.
+ * </ul>
  */
 class EscapeUtils
 {
@@ -106,5 +111,44 @@ class EscapeUtils
       }
     }
     return buf.toString();
+  }
+
+  /**
+   * Puts surrounding double quotes at the beginning and the end of an input <code>String</code> for secure CSV output if:<br>
+   * <ul>
+   * <li>the input string contains the current CSV field separator;
+   * <li>the input string contains a double quote (which has to be explicitly doubled);
+   * <li>the input string contains a CR, a LF, or the current OS line separator.
+   * <ul>
+   * Leaves the input <code>String</code> unchanged otherwise.
+   * @param input the original <code>String</code>, which may not be <code>null</code>.
+   * @param fieldSeparator the current CSV field separator.
+   * @return the input <code>String</code> surrounded by double quotes, or left unchanged.
+   */
+  public static String escapeCSVChars(String input, String fieldSeparator)
+  {
+    String result = input;
+    boolean surround = false;
+    if (input.indexOf(fieldSeparator) != -1) surround = true;
+    if (input.indexOf(XML2CSVMisc.LINE_SEPARATOR) != -1) surround = true;
+    if (input.indexOf("\r") != -1) surround = true;
+    if (input.indexOf("\n") != -1) surround = true;
+    if (surround == true)
+    {
+      StringBuffer buf = new StringBuffer();
+      for (int i = 0; i < input.length(); i++)
+      {
+        char c = input.charAt(i);
+        if (c == '"')
+        {
+          buf.append(c); // A double quote in the input string is doubled to be interpreted as a plain character and not a delimiter.
+          buf.append(c);
+        }
+        else
+          buf.append(c);
+      }
+      result = "\"" + buf.toString() + "\"";
+    }
+    return result;
   }
 }
