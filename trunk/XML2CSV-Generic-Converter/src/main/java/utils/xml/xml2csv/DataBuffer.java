@@ -503,7 +503,6 @@ class DataBuffer
                     .add(i);
                 // Time to erase those intermediate element XPaths from the books (that is from the columns at index trackedLeafElementXPaths.length and
                 // trackedLeafElementXPaths.length+1 in the buffer, between inf+1 and sup-1) in order to prevent loops based on them which would really do us no good.
-                //
                 if ((eraseFromParentList != null) && (eraseFromParentList.size() > 0))
                 {
                   for (int j = 0; j < eraseFromParentList.size(); j++)

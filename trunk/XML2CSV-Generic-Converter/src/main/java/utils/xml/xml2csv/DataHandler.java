@@ -595,6 +595,9 @@ class DataHandler extends DefaultHandler implements LexicalHandler
     // - or by means of an EscapeUtils method call (EscapeUtils being an open source class available over the Internet).
     // s = StringEscapeUtils.escapeXml(s);
     s = EscapeUtils.escapeXML10Chars(s, true, true, true, true);
+    // Puts double quotes at the beginning and at the end of the element content if it happens that it contains a line separator or the current CSV field
+    // separator to avoid display issues in the CSV output.
+    s = EscapeUtils.escapeCSVChars(s, fieldSeparator);
     if (trim == true) s = s.trim();
     return s;
   }
