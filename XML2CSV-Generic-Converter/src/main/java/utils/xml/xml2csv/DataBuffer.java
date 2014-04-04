@@ -403,7 +403,7 @@ class DataBuffer
       // Each time a tracked parent opening P is met (in column trackedLeafElementXPaths.length) the next closing index of the same kind is searched
       // (in column trackedLeafElementXPaths.length+1): one optimization sub routine is then triggered between the corresponding inf and sup indices of the buffer,
       // and all mono-occurrence (ZERO_TO_ONE or ONE_TO_ONE) tracked elements which have P as their parent are packed on the same line x (leaving a certain amount of blank
-      // lines between line x+1 and sup which are left as is because they will be silently discarded when the buffer when be echoed to the output).
+      // lines between line x+1 and sup which are left as is because they will be silently discarded when the buffer will be echoed to the output).
       // In addition, all mono-occurrence (ZERO_TO_ONE or ONE_TO_ONE) tracked elements which have P as their ancestor and are chained by intermediate mono-occurrence elements
       // back to P are treated just like direct mono-occurrence children of P for enhanced standard packing behavior.
       // If an extensive optimization is expected then:
