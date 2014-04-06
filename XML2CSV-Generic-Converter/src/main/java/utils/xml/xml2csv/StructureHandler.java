@@ -107,7 +107,7 @@ class StructureHandler extends DefaultHandler implements LexicalHandler
    */
   private ArrayList<String> flatLeafElementXPathList = new ArrayList<String>();
 
-  /** Low level string buffer which records element contents alongside the parsing. */
+  /** Low level string buffer which records element contents alongside parsing. */
   private StringBuffer textBuffer = null;
 
   /** Parser adapted for XML dates. */
@@ -535,7 +535,7 @@ class StructureHandler extends DefaultHandler implements LexicalHandler
         }
         if (found == false)
         {
-          // OK: oneChildShortNameInGraph should be marked as optional. Being a child of the current element its complete XPath
+          // OK: oneChildShortNameInGraph should be marked as optional. Being a child of the current element its complete XPath is obtained with an appropriate concatenation.
           String xpath = getXPathAsString(currentXMLTagSequence) + "." + oneChildShortNameInGraph;
           String[] props = properties.get(xpath);
           if (XML2CSVCardinality.isOptional(props[0]) == false)
@@ -574,7 +574,7 @@ class StructureHandler extends DefaultHandler implements LexicalHandler
     previousXMLTagSequence = previousXMLTagSequencePerDepth.get(currentXMLTagSequence.size() - 1);
     if (previousXMLTagSequence == null) previousXMLTagSequence = new ArrayList<String>();
 
-    // The current closing element is recorded at the new previous element of the corresponding depth.
+    // The current closing element is recorded as the new previous element of the corresponding depth.
     previousXMLTagSequence.clear();
     previousXMLTagSequence.addAll(currentXMLTagSequence);
     previousXMLTagSequencePerDepth.set(currentXMLTagSequence.size() - 1, previousXMLTagSequence);
@@ -670,7 +670,7 @@ class StructureHandler extends DefaultHandler implements LexicalHandler
       }
     }
 
-    // If performTest is true then the comparison makes sense, which, technically means that we won't hit a ugly runtime NullPointerException or IndexOutOfBoundsException.
+    // If performTest is true then the comparison makes sense, which, technically, means that we won't hit an ugly runtime NullPointerException or IndexOutOfBoundsException.
     if (performTest == true)
     {
       // All the tags of previousXMLTagSequence and currentXMLTagSequence match but for the last one, which are different (see previous multi-occurrence test).
@@ -761,7 +761,7 @@ class StructureHandler extends DefaultHandler implements LexicalHandler
             for (int i = indexOfCurrentTagNode + 1; i < temp.length; i++)
               if (temp[i].equals(lastTagOfPreviousElement) == false) replacementNode.put(temp[i], pointer.get(temp[i]));
           }
-          // Replaces the content of the shared parent element's last tag node (of for current element & previous element).
+          // Replaces the content of the shared parent element's last tag node (shared parent of the current element & previous element).
           previousPointer.put(currentXMLTagSequence.get(currentXMLTagSequence.size() - 2), replacementNode);
         }
       }
@@ -873,12 +873,12 @@ class StructureHandler extends DefaultHandler implements LexicalHandler
     String s = "" + textBuffer.toString();
     textBuffer = null;
     // "Entity References" parsing issue (example: &lt; , ...).
-    // The reader.setFeature in the main class should prevent the "Entity References" (such as &gt; , see http://www.w3schools.com/xml/xml_syntax.asp)
-    // from being converted back to XML control character (such as >) in plain text in a declarative way without extra coding but it does not work.
-    // Thus, re-escaping of control characters in plain text is done by hand:
-    // - either by means of Apache Common's StringEscapeUtils method (but this method transforms accentuated characters such as é è à into #nnn; values,
-    // something which wasn't done in the original XML files);
-    // - or by means of an EscapeUtils method call (EscapeUtils being an open source class available over the Internet).
+    // The reader.setFeature call in the main class should prevent the "Entity References" (such as &gt; , see http://www.w3schools.com/xml/xml_syntax.asp)
+    // from being converted back to XML control character (such as >) in plain text in a declarative way without extra coding but it doesn't work (sigh).
+    // As a consequence, re-escaping of control characters in plain text has to be done by hand here.
+    // - initially by means of Apache Common's StringEscapeUtils method, but, because this method transforms accentuated characters such as é è à into #nnn;
+    // values, something which wasn't done in the original XML files, now,
+    // - by means now of an EscapeUtils method call (EscapeUtils being an IBM open source class available over the Internet).
     // s = StringEscapeUtils.escapeXml(s);
     s = EscapeUtils.escapeXML10Chars(s, true, true, true, true);
     if (trim == true) s = s.trim();

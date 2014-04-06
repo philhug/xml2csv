@@ -672,10 +672,9 @@ public class XML2CSVGenericGenerator
       // http://xerces.apache.org/xerces2-j/features.html , http://en.wikipedia.org/wiki/List_of_XML_and_HTML_character_entity_references#Predefined_entities_in_XML
       // and to a lesser extent the Java API doc of the LexicalHandler (see http://www.saxproject.org/apidoc/org/xml/sax/ext/LexicalHandler.html, method startEntity).
       // When set to false, entity references (see http://www.w3schools.com/xml/xml_syntax.asp § "Entity References") are not transformed while an input file is read,
-      // that is &gt; is not transformed into the > character, which is the exact behavior needed in order avoid generating output files with misplaced XML control
-      // characters.
-      // Note: should work without extra coding in a declarative way, but it doesn't. Instead, the underneath data handler were updated in order to call a dedicated
-      // EscapeUtils method in charge of the the issue (re-transforms XML control characters in text back to neutral "Entity References").
+      // that is &gt; is not transformed into the > character, which is the exact behavior needed in order avoid generating output files with misplaced XML control characters.
+      // Note: should work without extra coding in a declarative way, but it doesn't. Instead, the underneath data handler was updated in order to call a dedicated
+      // EscapeUtils method in charge of the the issue (that is: the re-transforming of XML control characters in text read back to neutral "Entity References").
       reader.setFeature("http://xml.org/sax/features/lexical-handler/parameter-entities", false);
       reader.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
 
