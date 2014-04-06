@@ -36,7 +36,7 @@ import org.xml.sax.helpers.DefaultHandler;
 /**
  * This SAX handler implementation parses the data of an XML input file in order to extract:<br>
  * <ul>
- * <li>either an explicit list of expected leaf elements if such a list was provided is the first place;
+ * <li>either an explicit list of expected leaf elements if such a list was provided in the first place;
  * <li>or all the XML leaf elements if no such list was provided.
  * </ul>
  * The {@link utils.xml.xml2csv.constants.XML2CSVOptimization#STANDARD STANDARD} optimization level implies data buffering and intermediate data packing before the data is actually
@@ -313,7 +313,7 @@ class DataHandler extends DefaultHandler implements LexicalHandler
     int index = getLeafElementCSVColumnIndex(getXPathAsString(currentXMLTagSequence));
     if (index == -1)
     {
-      // The current closing XML element is not a leaf XML element or it is a leaf XML element but it does not belong to the tracked XML leaf element.
+      // The current closing XML element is not a leaf XML element or it is a leaf XML element but it does not belong to the tracked XML leaf elements.
       // We do nothing.
     }
     else
@@ -321,7 +321,7 @@ class DataHandler extends DefaultHandler implements LexicalHandler
       if (level == XML2CSVOptimization.NONE)
       {
         // This is a raw mode execution.
-        // The current closing XML element belongs to the tracked XML leaf element.
+        // The current closing XML element belongs to the tracked XML leaf elements.
         // Because we are in raw mode the XML element content is placed in a new CSV line at the corresponding index (a CSV line with
         // trackedLeafElementXPaths.length fields). Then, the line is immediately sent to the CSV output file.
         String line = buildRawCSVOutputLine(index, trackedLeafElementsDescription.getElementsXPaths().length, content);
@@ -331,7 +331,7 @@ class DataHandler extends DefaultHandler implements LexicalHandler
       else
       {
         // This is a regular buffered/optimized execution.
-        // The current closing XML element belongs to the tracked XML leaf element.
+        // The current closing XML element belongs to the tracked XML leaf elements.
         // If regular mode the XML element content is buffered.
         dataBuffer.addContent(index, content);
       }
@@ -393,8 +393,9 @@ class DataHandler extends DefaultHandler implements LexicalHandler
     // Removes the current tag from the current tag list (element closure).
     currentXMLTagSequence.remove(currentXMLTagSequence.size() - 1);
 
-    // If the number of opened tracked element parents has reached zero triggers both buffer optimization and buffer flush to the CSV output file.
-    // If the data buffer happens to be empty methods optimize and flush will actually do nothing. Does nothing in raw mode i.e. when optimization is deactivated.
+    // If the number of opened tracked element parents has reached zero we trigger both buffer optimization and buffer flush to the CSV output file.
+    // If the data buffer happens to be empty the optimize and flush methods will actually do nothing.
+    // Of course, we do nothing in raw mode i.e. when optimization is deactivated.
     if (level != XML2CSVOptimization.NONE)
     {
       if (trackedElementParentCount == 0)
@@ -587,12 +588,12 @@ class DataHandler extends DefaultHandler implements LexicalHandler
     String s = "" + textBuffer.toString();
     textBuffer = null;
     // "Entity References" parsing issue (example: &lt; , ...).
-    // The reader.setFeature in the main class should prevent the "Entity References" (such as &gt; , see http://www.w3schools.com/xml/xml_syntax.asp)
-    // from being converted back to XML control character (such as >) in plain text in a declarative way without extra coding but it does not work.
-    // Thus, re-escaping of control characters in plain text is done by hand:
-    // - either by means of Apache Common's StringEscapeUtils method (but this method transforms accentuated characters such as é è à into #nnn; values,
-    // something which wasn't done in the original XML files);
-    // - or by means of an EscapeUtils method call (EscapeUtils being an open source class available over the Internet).
+    // The reader.setFeature call in the main class should prevent the "Entity References" (such as &gt; , see http://www.w3schools.com/xml/xml_syntax.asp)
+    // from being converted back to XML control character (such as >) in plain text in a declarative way without extra coding but it doesn't work (sigh).
+    // As a consequence, re-escaping of control characters in plain text has to be done by hand here.
+    // - initially by means of Apache Common's StringEscapeUtils method, but, because this method transforms accentuated characters such as é è à into #nnn;
+    // values, something which wasn't done in the original XML files, now,
+    // - by means now of an EscapeUtils method call (EscapeUtils being an IBM open source class available over the Internet).
     // s = StringEscapeUtils.escapeXml(s);
     s = EscapeUtils.escapeXML10Chars(s, true, true, true, true);
     // Puts double quotes at the beginning and at the end of the element content if it happens that it contains a line separator or the current CSV field
@@ -691,7 +692,7 @@ class DataHandler extends DefaultHandler implements LexicalHandler
   }
 
   /**
-   * Returns the column index of one particular XPath in the CSV output file, of <code>-1</code> if the XPath does not correspond to a tracked XML element.
+   * Returns the column index of one particular XPath in the CSV output file, or <code>-1</code> if the XPath does not correspond to a tracked XML element.
    * @param xpath the XPath to examine.
    * @return the index of the XPath in the CSV output file, or -1.
    */
