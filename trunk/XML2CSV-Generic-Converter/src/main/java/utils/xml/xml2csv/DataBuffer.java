@@ -765,7 +765,7 @@ class DataBuffer
             }
             else
             {
-              // All the selected columns between the indices inf and sup in the buffer were empty. There is nothing to optimize.
+              // All the selected columns between indices inf and sup in the buffer were empty. There is nothing to optimize.
             }
           }
           // When the optimization sub routine is finished the main loop resumes.
@@ -922,7 +922,7 @@ class DataBuffer
                     }
                     else if ((buffer.get(y)[oneSelectedColumnIndex].equals(buffer.get(x)[oneSelectedColumnIndex])) && (loopCount > 1))
                     {
-                      // OK: might happen when several standard+extensive loop are made on the same buffer.
+                      // OK: might happen when several standard+extensive loops are made on the same buffer.
                       // This is at least the second loop and line x is a mono valued element which was in the scope of the previous
                       // ZERO_TO_ONE/ONE_TO_ONE tracked elements downward copy, and all of the remnant candidate y lines between x+1
                       // and sup were also in that scope and received the same fields for the same reason.
@@ -967,7 +967,7 @@ class DataBuffer
                 selectedColums.clear();
                 for (int i = 0; i < trackedLeafElementXPaths.length; i++)
                 {
-                  if (trackedLeafElementParentXPaths[i].contains(trackedParentOpening)) // Contains, non equal => includes sub XPaths of trackedParentOpening.
+                  if (trackedLeafElementParentXPaths[i].contains(trackedParentOpening)) // Contains, not equals => includes sub XPaths of trackedParentOpening.
                   {
                     if (((trackedLeafElementCardinalities[i] == XML2CSVCardinality.ONE_TO_MANY) || (trackedLeafElementCardinalities[i] == XML2CSVCardinality.ZERO_TO_MANY)))
                     {
@@ -1068,7 +1068,7 @@ class DataBuffer
             }
             else
             {
-              // All the selected columns between the indices inf and sup in the buffer were empty. There is nothing to optimize.
+              // All the selected columns between indices inf and sup in the buffer were empty. There is nothing to optimize.
             }
           }
           // When the optimization sub routine is finished the main loop resumes.
