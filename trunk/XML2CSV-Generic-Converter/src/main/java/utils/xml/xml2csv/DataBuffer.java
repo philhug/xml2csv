@@ -408,8 +408,8 @@ class DataBuffer
       // back to P are treated just like direct mono-occurrence children of P for enhanced standard packing behavior.
       // If an extensive optimization is expected then:
       // - the data of line x is copied back into all non empty lines containing a field in connection with a multi-occurrence (ZERO_TO_MANY or ONE_TO_MANY) tracked element
-      // which has either P as its parent or a sub element of P as its parent, plus lines containing a field in connection with a mono-occurrence (ZERO_TO_ONE or ONE_TO_ONE)
-      // tracked element which has a sub element of P as parent.
+      // which has P as its parent, plus all non empty lines containing a field in connection with a mono-occurrence (ZERO_TO_ONE or ONE_TO_ONE) or multi-occurrence
+      // (ZERO_TO_MANY/ONE_TO_MANY) tracked element which has P as ancestor and is connected to P by at least one intermediate multi-occurrence element.
       // - line x is emptied in order to make it disappear in the output if x has been copied back at least once.
       // When a sub routine ends the main loop resumes at inf+1, and when the buffer end is reached the optimization is phase is finished.
       int inf = 0;
