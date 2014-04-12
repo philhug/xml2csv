@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Root>
+	<Head>
+		<Header>H1</Header>
+		<Header>H2</Header>
+		<Header>H3</Header>
+	</Head>
+	<Row country="NO">
+		<Data idx="333">
+			<Data0>true</Data0>
+			<Amount currency="nok">123</Amount>
+			<SubData>
+				<SubData1>SD1a</SubData1>
+				<SubData1>SD1b</SubData1>
+			</SubData>
+			<AddAmount>12</AddAmount>
+		</Data>
+		<Date>2014-01-17</Date>
+		<Other id="0">
+			<Data>
+				<Data1 owner="Hjørdis">1</Data1>
+				<Data2 owner="Lars">2</Data2>
+			</Data>
+		</Other>
+	</Row>
+	<Row country="IR">
+		<ExtraUnexpectedTag>ExtraUnexpectedValue0</ExtraUnexpectedTag>
+		<Data idx="111">
+			<Data0>false</Data0>
+			<Data1>a</Data1>
+			<SubData>
+				<SubData1>SD2a</SubData1>
+			</SubData>
+		</Data>
+		<Data idx="555">
+			<Data0>true</Data0>
+			<Amount currency="eur">4567</Amount>
+			<Data1>b</Data1>
+			<SubData>
+				<SubData1>SD3a</SubData1>
+				<SubData1>SD3b</SubData1>
+				<SubData1>SD3c</SubData1>
+			</SubData>
+		</Data>
+		<Date>2014-01-14</Date>
+		<Date>2014-01-15</Date>
+		<Date>2014-01-16</Date>
+		<AddDate>2001-01-01</AddDate>
+		<Other flavor="zzz" id="4">
+			<Data>
+				<Data1>34.2</Data1>
+				<Data2 owner="Áine">56</Data2>
+			</Data>
+		</Other>
+	</Row>
+	<Row country="FR">
+		<ExtraUnexpectedTag>ExtraUnexpectedValue</ExtraUnexpectedTag>
+		<Data idx="777">
+			<Date>2014-01-11</Date>
+		</Data>
+	</Row>
+</Root>

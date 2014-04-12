@@ -32,6 +32,7 @@ package utils.xml.xml2csv;
 
 import utils.xml.xml2csv.constants.XML2CSVCardinality;
 import utils.xml.xml2csv.constants.XML2CSVLogLevel;
+import utils.xml.xml2csv.constants.XML2CSVNature;
 import utils.xml.xml2csv.constants.XML2CSVType;
 import utils.xml.xml2csv.constants.XML2CSVMisc;
 
@@ -793,6 +794,15 @@ class StructureHandler extends DefaultHandler implements LexicalHandler
     else
     {
       // Intermediate graph element reached.
+      // Because we deal with leaf elements only the intermediate element is skipped but if attribute tracking is activated and if the element has attributes,
+      // they are added to the list like if the were leaf elements.
+      if ((withAttributes == true) && (attributes.containsKey(currentXpath) == true))
+      {
+        ArrayList<String[]> attsList = attributes.get(currentXpath);
+        for (int i = 0; i < attsList.size(); i++)
+          flatLeafElementXPathList.add(currentXpath + "@" + attsList.get(i)[0]); // Attributes are added to the flat list with a "@" between the element and the attribute name.
+      }
+      // The nested elements of the intermediate element are processed.
       Iterator<String> iterator = keySet.iterator();
       while (iterator.hasNext())
       {
@@ -1198,9 +1208,10 @@ class StructureHandler extends DefaultHandler implements LexicalHandler
   }
 
   /**
-   * Returns the XPath list of leaf elements which have the input XPath as ancestor, of <code>null</code> if the input XPath is not an ancestor of any leaf element.
+   * Returns the XPath list of leaf elements or attributes which have the input XPath as ancestor, of <code>null</code> if the input XPath is not an ancestor of any leaf element or
+   * attribute.
    * @param ancestorXpath the input XPath.
-   * @return the XPath list of leaf elements which have the input XPath as ancestor, or <code>null</code>.
+   * @return the XPath list of leaf elements or attributes which have the input XPath as ancestor, or <code>null</code>.
    */
   public String[] getDescendantLeafElements(String ancestorXpath)
   {
@@ -1208,7 +1219,7 @@ class StructureHandler extends DefaultHandler implements LexicalHandler
     ArrayList<String> res = new ArrayList<String>();
     for (int i = 0; i < flatLeafElementXPathList.size(); i++)
       if ((flatLeafElementXPathList.get(i).startsWith(ancestorXpath)) && (flatLeafElementXPathList.get(i).length() > ancestorXpath.length())
-          && (flatLeafElementXPathList.get(i).charAt(ancestorXpath.length()) == '.'))
+          && ((flatLeafElementXPathList.get(i).charAt(ancestorXpath.length()) == '.') || (flatLeafElementXPathList.get(i).charAt(ancestorXpath.length()) == '@')))
       {
         res.add(flatLeafElementXPathList.get(i));
       }
@@ -1250,23 +1261,34 @@ class StructureHandler extends DefaultHandler implements LexicalHandler
    * Returns a description of all the elements (leaf or intermediate) met in the structure provided as an a <code>HashMap&lt;String, String[]&gt;</code> for random access where:<br>
    * <ul>
    * <li>keys are element XPaths;
-   * <li>the value associated with a key is a <code>String[2]</code> with: at index <code>0</code>, the element {@link utils.xml.xml2csv.constants.XML2CSVCardinality#getCode()
-   * cardinality code} and at index <code>1</code> the element {@link utils.xml.xml2csv.constants.XML2CSVType#getCode() type code}.
+   * <li>the value associated with a key is a <code>String[3]</code> with: at index <code>0</code>, the element {@link utils.xml.xml2csv.constants.XML2CSVCardinality#getCode()
+   * cardinality code}, at index <code>1</code> the element {@link utils.xml.xml2csv.constants.XML2CSVType#getCode() type code}, and at index <code>2</code> the element
+   * {@link utils.xml.xml2csv.constants.XML2CSVNature#getCode() nature code}.
    * </ul>
    * @return the whole set of structure elements provided as a <code>HashMap&lt;String, String[]&gt;</code> for random XPath access.
    */
   public HashMap<String, String[]> getAllElementsDescription()
   {
-    // The inner dictionary is cloned.
+    // The inner dictionary is cloned, and a 3rd property is added to each element which indicates the element nature.
     HashMap<String, String[]> clone = new HashMap<String, String[]>();
     Iterator<String> iterator = properties.keySet().iterator();
     while (iterator.hasNext())
     {
       String xpath = iterator.next();
       String[] props = properties.get(xpath);
-      String[] copy = new String[props.length];
-      copy[0] = props[0];
-      copy[1] = props[1];
+      String[] copy = new String[props.length + 1];
+      for (int i = 0; i < props.length; i++)
+        copy[i] = props[i];
+      boolean attribute = false; // True it the xpath maps an attribute, and false if it is a regular element.
+      if (xpath.indexOf("@") != -1) attribute = true;
+      boolean intermediate = false; // True if the xpath maps an intermediate element (with sub elements), and false if it is a leaf element.
+      Iterator<String> iterator2 = properties.keySet().iterator();
+      while (iterator2.hasNext())
+      {
+        String xpath2 = iterator2.next();
+        if ((xpath2.startsWith(xpath)) && (xpath2.length() > xpath.length()) && (xpath2.substring(xpath.length()).startsWith("."))) intermediate = true;
+      }
+      copy[props.length] = XML2CSVNature.parse(intermediate, attribute).getCode();
       clone.put(xpath, copy);
     }
     return clone;

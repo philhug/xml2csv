@@ -46,7 +46,7 @@ public enum XML2CSVOptimization
   private final String label;
 
   /**
-   * <code>XML2CSVOptimization<code> constructor.
+   * <code>XML2CSVOptimization</code> constructor.
    * @param code the <code>XML2CSVOptimization</code> code.
    * @param lab the <code>XML2CSVOptimization</code> label.
    */

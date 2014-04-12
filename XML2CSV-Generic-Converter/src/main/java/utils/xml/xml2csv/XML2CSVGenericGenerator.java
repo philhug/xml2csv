@@ -20,7 +20,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
@@ -285,11 +285,12 @@ public class XML2CSVGenericGenerator
 
     // If a list of expected elements has been provided we ensure the element XPaths provided were met in the XML structure.
     // XPaths not found in the structure trigger warning messages and are plainly ignored (technically: set to null in the String[]).
-    // Partial XPaths are tolerated as a convenient representation of all leaf elements which have this XPath as ancestor.
+    // Partial XPaths are tolerated as a convenient representation of all leaf elements which have this XPath as ancestor, plus
+    // all attributes which have this XPath as ancestor.
     // The same test is made for the list of elements to discard.
     if (xmlExpectedElementsXPaths != null)
     {
-      HashMap<String, String> accumulator = new HashMap<String, String>(); // A HashMap eliminates duplicates.
+      LinkedHashMap<String, String> accumulator = new LinkedHashMap<String, String>(); // A LinkedHashMap eliminates duplicates and keeps order too.
       for (int i = 0; i < xmlExpectedElementsXPaths.length; i++)
       {
         if (structureHandler.getIndexOfLeafElement(xmlExpectedElementsXPaths[i]) == -1)
@@ -325,7 +326,7 @@ public class XML2CSVGenericGenerator
     }
     if (xmlDiscardedElementsXPaths != null)
     {
-      HashMap<String, String> accumulator = new HashMap<String, String>(); // A HashMap eliminates duplicates.
+      LinkedHashMap<String, String> accumulator = new LinkedHashMap<String, String>(); // A LinkedHashMap eliminates duplicates and keeps order too.
       for (int i = 0; i < xmlDiscardedElementsXPaths.length; i++)
       {
         if (structureHandler.getIndexOfLeafElement(xmlDiscardedElementsXPaths[i]) == -1)

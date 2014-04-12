@@ -52,7 +52,7 @@ public enum XML2CSVCardinality
   private final String maxOccurs;
 
   /**
-   * <code>XML2CSVCardinality<code> constructor.
+   * <code>XML2CSVCardinality</code> constructor.
    * @param code the <code>XML2CSVCardinality</code> code.
    * @param lab the <code>XML2CSVCardinality</code> label.
    * @param min the <code>XML2CSVCardinality</code> minimum element count.
@@ -124,7 +124,7 @@ public enum XML2CSVCardinality
   }
 
   /**
-   * Takes a <code>XML2CSVCardinality</code> for input and returns the corresponding <code>XML2CSVCardinality</code> with an unbounded max element count.<br>
+   * Takes an <code>XML2CSVCardinality</code> for input and returns the corresponding <code>XML2CSVCardinality</code> with an unbounded max element count.<br>
    * In other words:<br>
    * <ul>
    * <li>returns <code>ONE_TO_MANY</code> for an input <code>ONE_TO_ONE</code> cardinality and leaves <code>ONE_TO_MANY</code> unchanged;
@@ -142,7 +142,7 @@ public enum XML2CSVCardinality
   }
 
   /**
-   * Takes a <code>XML2CSVCardinality</code> code for input and returns the corresponding <code>XML2CSVCardinality</code> code with an unbounded max element count.<br>
+   * Takes an <code>XML2CSVCardinality</code> code for input and returns the corresponding <code>XML2CSVCardinality</code> code with an unbounded max element count.<br>
    * In other words:<br>
    * <ul>
    * <li>returns <code>ONE_TO_MANY</code>'s code for an input <code>ONE_TO_ONE</code> cardinality code and leaves <code>ONE_TO_MANY</code>'s code unchanged;
@@ -165,7 +165,7 @@ public enum XML2CSVCardinality
   }
 
   /**
-   * Takes a <code>XML2CSVCardinality</code> code for input and returns <code>true</code> if the cardinality has an unbounded max element count, and <code>false</code> otherwise.<br>
+   * Takes an <code>XML2CSVCardinality</code> code for input and returns <code>true</code> if the cardinality has an unbounded max element count, and <code>false</code> otherwise.<br>
    * In other words:<br>
    * <ul>
    * <li>returns <code>false</code> for an input <code>ZERO_TO_ONE</code> cardinality;
@@ -186,7 +186,7 @@ public enum XML2CSVCardinality
   }
 
   /**
-   * Takes a <code>XML2CSVCardinality</code> for input and returns the corresponding <code>XML2CSVCardinality</code> with a zero minimum element count.<br>
+   * Takes an <code>XML2CSVCardinality</code> for input and returns the corresponding <code>XML2CSVCardinality</code> with a zero minimum element count.<br>
    * In other words:<br>
    * <ul>
    * <li>returns <code>ZERO_TO_ONE</code> for an input <code>ONE_TO_ONE</code> cardinality and leaves <code>ZERO_TO_ONE</code> unchanged;
@@ -204,7 +204,7 @@ public enum XML2CSVCardinality
   }
 
   /**
-   * Takes a <code>XML2CSVCardinality</code> code for input and returns the corresponding <code>XML2CSVCardinality</code> code with a zero minimum element count.<br>
+   * Takes an <code>XML2CSVCardinality</code> code for input and returns the corresponding <code>XML2CSVCardinality</code> code with a zero minimum element count.<br>
    * In other words:<br>
    * <ul>
    * <li>returns <code>ZERO_TO_ONE</code>'s code for an input <code>ONE_TO_ONE</code> cardinality code and leaves <code>ZERO_TO_ONE</code>'s code unchanged;
@@ -227,7 +227,7 @@ public enum XML2CSVCardinality
   }
 
   /**
-   * Takes a <code>XML2CSVCardinality</code> code for input and returns <code>true</code> if the cardinality has a zero minimum element count, and <code>false</code> otherwise.<br>
+   * Takes an <code>XML2CSVCardinality</code> code for input and returns <code>true</code> if the cardinality has a zero minimum element count, and <code>false</code> otherwise.<br>
    * In other words:<br>
    * <ul>
    * <li>returns <code>true</code> for an input <code>ZERO_TO_ONE</code> cardinality;

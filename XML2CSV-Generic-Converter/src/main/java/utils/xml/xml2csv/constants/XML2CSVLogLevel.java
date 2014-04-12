@@ -65,7 +65,7 @@ public enum XML2CSVLogLevel
   private final int degree;
 
   /**
-   * <code>XML2CSVLogLevel<code> constructor.
+   * <code>XML2CSVLogLevel</code> constructor.
    * @param code the <code>XML2CSVLogLevel</code> code.
    * @param lab the <code>XML2CSVLogLevel</code> label.
    * @param degree the <code>XML2CSVLogLevel</code> degree.
