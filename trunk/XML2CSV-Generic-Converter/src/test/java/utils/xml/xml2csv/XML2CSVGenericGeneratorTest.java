@@ -1,8 +1,13 @@
 package utils.xml.xml2csv;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.Charset;
+import java.util.LinkedHashMap;
 import java.util.Properties;
 
 import org.apache.commons.io.FileUtils;
@@ -16,6 +21,7 @@ import org.junit.Assert;
 
 import org.junit.rules.TemporaryFolder;
 
+import utils.xml.xml2csv.constants.XML2CSVMisc;
 import utils.xml.xml2csv.constants.XML2CSVOptimization;
 
 /**
@@ -32,6 +38,12 @@ public class XML2CSVGenericGeneratorTest
 
   /** File used for blend output file test. */
   private File customOutputFile = null;
+
+  /** File used for positive output stream test. */
+  private File outputPositiveFile = null;
+
+  /** File used for positive output stream test. */
+  private File outputNegativeFile = null;
 
   /** Test Log4J configuration file. */
   private File customLog4JFile = null;
@@ -50,6 +62,12 @@ public class XML2CSVGenericGeneratorTest
   {
     Assert.assertNotNull("Test file 1 missing in test resources directory", getClass().getResource("/sample1.xml"));
     Assert.assertNotNull("Test file 2 missing  in test resources directory", getClass().getResource("/sample2.xml"));
+    Assert.assertNotNull("Test file 3 missing  in test resources directory", getClass().getResource("/sample3.xml"));
+    Assert.assertNotNull("Filter file 3 missing  in test resources directory", getClass().getResource("/filterFile3.txt"));
+    Assert.assertNotNull("Result file 'customOutput.csv' missing  in test resources directory", getClass().getResource("/customOutput.csv"));
+    Assert.assertNotNull("Result file 'output.csv' missing  in test resources directory", getClass().getResource("/output.csv"));
+    Assert.assertNotNull("Result file 'output3p.csv' missing  in test resources directory", getClass().getResource("/output3p.csv"));
+    Assert.assertNotNull("Result file 'output3n.csv' missing  in test resources directory", getClass().getResource("/output3n.csv"));
     Assert.assertNotNull("Log4J configuration file in test resources directory", getClass().getResource("/xml2csvlog4j.properties"));
   }
 
@@ -65,6 +83,8 @@ public class XML2CSVGenericGeneratorTest
   {
     outputFile = testFolder.newFile("output.csv");
     customOutputFile = testFolder.newFile("customOutput.csv");
+    outputPositiveFile = testFolder.newFile("output3p.csv");
+    outputNegativeFile = testFolder.newFile("output3n.csv");
     outputDir = testFolder.newFolder("outputDir");
     logFile = testFolder.newFile("XML2CSV-Generic-Converter.log"); // Generated at the project's root.
 
@@ -73,6 +93,7 @@ public class XML2CSVGenericGeneratorTest
     Properties props = new Properties();
     props.load(fis);
     PropertyConfigurator.configure(props);
+    fis.close();
     XML2CSVLoggingFacade.log = LogFactory.getLog("XML2CSV-Generic-Converter");
     XML2CSVLoggingFacade.VERBOSE_MODE = true;
   }
@@ -143,7 +164,49 @@ public class XML2CSVGenericGeneratorTest
   }
 
   /**
-   * Deletion of temporary files & directories after JUnit test.
+   * Tests XML to CSV conversion of one file containing both elements and attributes against a positive filter file, with an explicit CSV output file name.
+   * @throws Exception in case of error.
+   */
+  @Test
+  public void testFilterFilePositiveGeneration() throws Exception
+  {
+    File expectedPositiveOutputFile = new File(getClass().getResource("/output3p.csv").toURI());
+    File sample3 = new File(getClass().getResource("/sample3.xml").toURI());
+    File[] inputs = new File[1];
+    inputs[0] = sample3;
+    File filterFile3 = new File(getClass().getResource("/filterFile3.txt").toURI());
+    String[] xpaths = readFilterFile(filterFile3);
+
+    XML2CSVGenericGenerator generator = new XML2CSVGenericGenerator(outputPositiveFile, null);
+    generator.setOptimization(XML2CSVOptimization.EXTENSIVE_V2);
+    generator.generate(inputs, null, xpaths, null, true);
+
+    Assert.assertEquals(FileUtils.readFileToString(expectedPositiveOutputFile, "utf-8"), FileUtils.readFileToString(outputPositiveFile, "utf-8"));
+  }
+
+  /**
+   * Tests XML to CSV conversion of one file containing both elements and attributes against a negative filter file, with an explicit CSV output file name.
+   * @throws Exception in case of error.
+   */
+  @Test
+  public void testFilterFileNegativeGeneration() throws Exception
+  {
+    File expectedNegativeOutputFile = new File(getClass().getResource("/output3n.csv").toURI());
+    File sample3 = new File(getClass().getResource("/sample3.xml").toURI());
+    File[] inputs = new File[1];
+    inputs[0] = sample3;
+    File filterFile3 = new File(getClass().getResource("/filterFile3.txt").toURI());
+    String[] xpaths = readFilterFile(filterFile3);
+
+    XML2CSVGenericGenerator generator = new XML2CSVGenericGenerator(outputNegativeFile, null);
+    generator.setOptimization(XML2CSVOptimization.EXTENSIVE_V2);
+    generator.generate(inputs, null, null, xpaths, true);
+
+    Assert.assertEquals(FileUtils.readFileToString(expectedNegativeOutputFile, "utf-8"), FileUtils.readFileToString(outputNegativeFile, "utf-8"));
+  }
+
+  /**
+   * Deletion of temporary files & directories after the JUnit test runs.
    * @throws Exception in case of error.
    */
   @After
@@ -151,10 +214,43 @@ public class XML2CSVGenericGeneratorTest
   {
     outputFile.delete();
     customOutputFile.delete();
+    outputPositiveFile.delete();
+    outputNegativeFile.delete();
     File[] contents = outputDir.listFiles();
     for (int i = 0; i < contents.length; i++)
       contents[i].delete();
     outputDir.delete();
+    LogFactory.releaseAll();
     if (logFile.exists()) logFile.deleteOnExit();
+  }
+
+  /**
+   * Reads a filter file containing element XPaths and returns them as a <code>String</code> array.
+   * @param filterFile the filter file to read, provided as a <code>File</code>.
+   * @return the element XPaths read.
+   * @throws IOException in case of error.
+   */
+  private static String[] readFilterFile(File filterFile) throws IOException
+  {
+    String[] result = null;
+
+    FileInputStream fis = new FileInputStream(filterFile);
+    InputStreamReader isr = new InputStreamReader(fis, Charset.forName(XML2CSVMisc.UTF8));
+    BufferedReader br = new BufferedReader(isr);
+    LinkedHashMap<String, String> l = new LinkedHashMap<String, String>();
+    String oneLine = br.readLine();
+    while (oneLine != null)
+    {
+      if ((!oneLine.trim().isEmpty()) && (!oneLine.startsWith("--")))
+      {
+        l.put(oneLine.trim(), null);
+      }
+      oneLine = br.readLine();
+    }
+    br.close();
+    if (l.size() == 0) throw new IOException("Filter file does not contain any leaf element XPath.");
+    String[] temp = new String[l.size()];
+    result = l.keySet().toArray(temp);
+    return result;
   }
 }

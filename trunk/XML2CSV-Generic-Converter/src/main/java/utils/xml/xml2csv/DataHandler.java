@@ -17,6 +17,7 @@ package utils.xml.xml2csv;
 import utils.xml.xml2csv.constants.XML2CSVCardinality;
 import utils.xml.xml2csv.constants.XML2CSVLogLevel;
 import utils.xml.xml2csv.constants.XML2CSVMisc;
+import utils.xml.xml2csv.constants.XML2CSVNature;
 import utils.xml.xml2csv.constants.XML2CSVOptimization;
 import utils.xml.xml2csv.constants.XML2CSVType;
 
@@ -240,13 +241,13 @@ class DataHandler extends DefaultHandler implements LexicalHandler
       // Displays the whole unstructured dictionary contents if the debug degree is >=3.
       if ((XML2CSVLoggingFacade.DEBUG_MODE == true) && (XML2CSVLoggingFacade.debugDegree >= XML2CSVLogLevel.DEBUG3.getDegree()))
       {
-        XML2CSVLoggingFacade.log(XML2CSVLogLevel.DEBUG3, "unstructured doctionary contents:");
+        XML2CSVLoggingFacade.log(XML2CSVLogLevel.DEBUG3, "unstructured dictionary contents:");
         HashMap<String, String[]> dictionary = trackedLeafElementsDescription.getDictionary();
         Iterator<String> iterator = dictionary.keySet().iterator();
         while (iterator.hasNext())
         {
           String oneXpath = iterator.next();
-          String[] props = dictionary.get(oneXpath); // Index 0 = cardinality, and index 1 = type.
+          String[] props = dictionary.get(oneXpath); // Index 0 = cardinality, index 1 = type, index 2 = nature.
           StringBuffer sb = new StringBuffer();
           sb.append("\t");
           sb.append("column <");
@@ -255,6 +256,8 @@ class DataHandler extends DefaultHandler implements LexicalHandler
           sb.append(props[0]);
           sb.append("|");
           sb.append(props[1]);
+          sb.append("|");
+          sb.append(props[2]);
           sb.append("]");
           XML2CSVLoggingFacade.log(XML2CSVLogLevel.DEBUG3, sb.toString());
         }
@@ -284,25 +287,56 @@ class DataHandler extends DefaultHandler implements LexicalHandler
     if (eName.contains("@")) throw new SAXException("Bad XML holding tags containing @ characters, which are forbidden.");
     currentXMLTagSequence.add(eName);
 
+    // Root element detection
+    if (rootTag == null) rootTag = eName;
+
     // Current element contents buffer reset before the element is started.
     textBuffer = null;
 
-    // Increases the number of opened tracked element parents if it happens that the current opened element is a parent of a tracked element.
+    // Increases the number of opened tracked element parents if it happens that the current opened element is a parent of a tracked element,
+    // provided that it is not the root element (the root element is explicitly excluded for performance purpose even when it is nesting a
+    // tracked element because including it would mean to wait for the root tag end to reach consistency and flush the buffer, that is, in
+    // other words, to read the whole XML file before processing it which is definitely not what we want).
     // Sends the information to the data buffer too for optimization purpose. Does nothing in raw mode i.e. when optimization is deactivated.
     if (level != XML2CSVOptimization.NONE)
     {
-      if (isParentOfTrackedElement())
+      if ((isParentOfTrackedElement() == true) && (isRootElement() == false))
       {
         trackedElementParentCount++;
         dataBuffer.recordTrackedParentOpening(getXPathAsString(currentXMLTagSequence));
       }
     }
 
-    // Records and defers the output of element attributes until the element closing is actually met.
-    if ((withAttributes == true) && (atts != null) && (atts.getLength() != 0)) recordAttributes(atts);
-
-    // Root element detection
-    if (rootTag == null) rootTag = eName;
+    // If attributes are expected and the current opening element has attributes then:
+    // -1- if the element is a leaf element its attributes are recorded and their output is deferred until the element closing is actually met
+    // (depending on whether the element is a tracked one or not in order to have the element attributes appear at the right of the element
+    // content just like spreadsheets do);
+    // -2- if the element is not a leaf element then it cannot belong to the tracked elements (which are a subset of the leaf elements) and there
+    // is no use waiting for the element closing: attributes which are tracked are immediately sent to the output.
+    // The unstructured dictionary holds the leaf/intermediary information for each entry it holds but when an element pops up from nowhere in a file
+    // outside the scope of the template file the dictionary doesn't contain its definition and the element cannot by construction be tracked either and,
+    // as a result, the element's attributes should be treated like in option -2-.
+    if ((withAttributes == true) && (atts != null) && (atts.getLength() != 0))
+    {
+      String[] props = trackedLeafElementsDescription.getDictionary().get(getXPathAsString(currentXMLTagSequence));
+      recordAttributes(atts); // Stacks the attributes no matter which option -1- or -2- is chosen.
+      boolean isLeaf = false;
+      if (props != null)
+      {
+        // OK, the element is defined in the dictionary: regular option -1- or -2- depending on whether it is a leaf element or not.
+        isLeaf = XML2CSVNature.isLeaf(props[2]);
+      }
+      else
+      {
+        // The element does not exit in the dictionary: option -2- by default.
+        isLeaf = false;
+      }
+      if (isLeaf == false) handleAttributes(); // Option -2-: Un-stacks and handles immediately the attributes of an intermediate element.
+      else
+      {
+        // Option -1-: the attributes are already stacked and will be handled when the element will be closed.
+      }
+    }
   }
 
   @Override
@@ -335,55 +369,41 @@ class DataHandler extends DefaultHandler implements LexicalHandler
         // If regular mode the XML element content is buffered.
         dataBuffer.addContent(index, content);
       }
+    }
 
-      // Time to handle element attributes if any, and if expected.
-      if (withAttributes == true)
+    // Time to handle element attributes for leaf elements if any, and if expected.
+    // The output of leaf element attributes is deferred until the element closing is actually met in order to have the element attributes appear at the right of the element
+    // if it is tracked (and if it is not tracked its attributes won't be either).
+    // The output of intermediate element attributes is handled immediately in startElement because intermediate elements are never tracked.
+    if (withAttributes == true)
+    {
+      String[] props = trackedLeafElementsDescription.getDictionary().get(getXPathAsString(currentXMLTagSequence));
+      boolean isLeaf = false;
+      if (props != null)
       {
-        ArrayList<String[]> attsList = attributes.get(getXPathAsString(currentXMLTagSequence));
-        if (attsList != null)
-        {
-          for (int i = 0; i < attsList.size(); i++)
-          {
-            String[] att = attsList.get(i);
-            // The column name of an attribute is The.Element.Path + @ + the attribute name.
-            int indexAtt = getLeafElementCSVColumnIndex(getXPathAsString(currentXMLTagSequence) + "@" + att[0]);
-            if (indexAtt != -1)
-            {
-              if (level == XML2CSVOptimization.NONE)
-              {
-                // The attribute is written in a new line at its correct index in the CSV output file (a CSV line with
-                // trackedLeafElementXPaths.length fields). Then, the line is immediately sent to the CSV output file.
-                String line = buildRawCSVOutputLine(indexAtt, trackedLeafElementsDescription.getElementsXPaths().length, att[1]);
-                emit(line);
-                ls(); // Next line.
-              }
-              else
-              {
-                // The attribute is buffered.
-                dataBuffer.addContent(indexAtt, att[1]);
-              }
-            }
-            else
-            {
-              // The currently parsed element belongs to the list of tracked elements (index != -1) so all its attributes should be tracked too
-              // (that's the way I chose to implement it: if an element is filtered and not tracked its attributes won't be present either, and
-              // if an element is tracked all its attributes will be tracked too - in other words there is no attribute filtering).
-              // For a single XML file it would certainly indicate a bug, but in fact it might happen if several XML files are parsed, and
-              // the XML file which served at structure analysis did not contain all possible attributes, and we're dealing with another XML file
-              // where a new unexpected element attribute pops up abruptly.
-              // By doing nothing I assume here there is no bug (holy Turing - protect me) but just a plain XML structure loophole.
-            }
-          }
-          attsList.clear();
-        }
+        // OK, the element is defined in the dictionary and its nature leaf/intermediary is defined.
+        isLeaf = XML2CSVNature.isLeaf(props[2]);
+      }
+      else
+      {
+        // The element does not exit in the dictionary and its nature is undefined. It was treated like an intermediary element when the element was opened.
+        isLeaf = false;
+      }
+      if (isLeaf == true) handleAttributes(); // Un-stacks and handles now the attributes of a leaf element.
+      else
+      {
+        // The attributes were handled when the element was opened. Nothing to do.
       }
     }
 
-    // Decreases the number of opened tracked element parents if it happens that the current closed element is a parent of a tracked element.
+    // Decreases the number of opened tracked element parents if it happens that the current closed element is a parent of a tracked element,
+    // provided that it is not the root element (the root element is explicitly excluded for performance purpose even when it is nesting a
+    // tracked element because including it would mean to wait for the root tag end to reach consistency and flush the buffer, that is, in
+    // other words, to read the whole XML file before processing it which is definitely not what we want).
     // Sends the information to the data buffer too for optimization purpose. Does nothing in raw mode i.e. when optimization is deactivated.
     if (level != XML2CSVOptimization.NONE)
     {
-      if (isParentOfTrackedElement())
+      if ((isParentOfTrackedElement() == true) && (isRootElement() == false))
       {
         trackedElementParentCount--;
         dataBuffer.recordTrackedParentClosing(getXPathAsString(currentXMLTagSequence));
@@ -634,7 +654,6 @@ class DataHandler extends DefaultHandler implements LexicalHandler
               String oneLeafElement = leafElementsDescription.getElementsXPaths()[j];
               if (oneLeafElement.equals(oneExpectedElementXPath)) include = true; // Element explicitly included.
               // Any attribute of an included element is included as well, provided that attributes be expected.
-              if ((withAttributes) && (oneLeafElement.startsWith(oneExpectedElementXPath + "@"))) include = true;
               if (include == true)
               {
                 temp1.add(leafElementsDescription.getElementsXPaths()[j]);
@@ -660,7 +679,6 @@ class DataHandler extends DefaultHandler implements LexicalHandler
             if (discardedElementsXpaths[i] != null)
             {
               if (oneLeafElement.equals(discardedElementsXpaths[i])) discard = true; // Element explicitly discarded.
-              if (oneLeafElement.startsWith(discardedElementsXpaths[i] + "@")) discard = true; // Any attribute of a discarded element is discarded as well.
               if (discard == true) break;
             }
           }
@@ -747,7 +765,7 @@ class DataHandler extends DefaultHandler implements LexicalHandler
 
   /**
    * Checks if the current element is a parent element of one of the tracked XML elements.
-   * @return <code>true</code> if the current element is a parent element of one of the tracked XML elements, and <code>true</code> otherwise.
+   * @return <code>true</code> if the current element is a parent element of one of the tracked XML elements, and <code>false</code> otherwise.
    */
   private boolean isParentOfTrackedElement()
   {
@@ -764,6 +782,18 @@ class DataHandler extends DefaultHandler implements LexicalHandler
         }
       }
     }
+    return result;
+  }
+
+  /**
+   * Checks if the current element is the root element.
+   * @return <code>true</code> if the current element is the root element, and <code>false</code> otherwise.
+   */
+  private boolean isRootElement()
+  {
+    boolean result = false;
+    String xpath = getXPathAsString(currentXMLTagSequence);
+    if ((xpath != null) && (xpath.equals(rootTag))) result = true;
     return result;
   }
 
@@ -792,6 +822,46 @@ class DataHandler extends DefaultHandler implements LexicalHandler
     attributes.put(xpath, attsList);
   }
 
+  /**
+   * Handles attributes for the current element.
+   * @throws SAXException in case of error.
+   */
+  private void handleAttributes() throws SAXException
+  {
+    ArrayList<String[]> attsList = attributes.get(getXPathAsString(currentXMLTagSequence));
+    if (attsList != null)
+    {
+      for (int i = 0; i < attsList.size(); i++)
+      {
+        String[] att = attsList.get(i);
+        // The column name of an attribute is The.Element.Path + @ + the attribute name.
+        int indexAtt = getLeafElementCSVColumnIndex(getXPathAsString(currentXMLTagSequence) + "@" + att[0]);
+        if (indexAtt != -1)
+        {
+          if (level == XML2CSVOptimization.NONE)
+          {
+            // The attribute is written in a new line at its correct index in the CSV output file (a CSV line with
+            // trackedLeafElementXPaths.length fields). Then, the line is immediately sent to the CSV output file.
+            String line = buildRawCSVOutputLine(indexAtt, trackedLeafElementsDescription.getElementsXPaths().length, att[1]);
+            emit(line);
+            ls(); // Next line.
+          }
+          else
+          {
+            // The attribute is buffered.
+            dataBuffer.addContent(indexAtt, att[1]);
+          }
+        }
+        else
+        {
+          // The attribute does not belong to the list of tracked element attributes (index = -1) so it should be discarded.
+          // We do nothing.
+        }
+      }
+      attsList.clear();
+    }
+  }
+
   // ================================================================================
   // Public/protected getters and setters
   // ================================================================================
@@ -801,6 +871,7 @@ class DataHandler extends DefaultHandler implements LexicalHandler
    */
   public void reset()
   {
+    rootTag = null;
     textBuffer = null;
     dataBuffer.reset();
   }

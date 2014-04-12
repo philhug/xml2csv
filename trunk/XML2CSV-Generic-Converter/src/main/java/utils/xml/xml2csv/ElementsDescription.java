@@ -129,8 +129,9 @@ class ElementsDescription
    * The dictionary is provided as a <code>HashMap&lt;String, String[]&gt;</code> optimized for random access where:<br>
    * <ul>
    * <li>keys are element XPaths;
-   * <li>the value associated with a key is a <code>String[2]</code> with: at index <code>0</code>, the element {@link utils.xml.xml2csv.constants.XML2CSVCardinality#getCode()
-   * cardinality code} and at index <code>1</code> the element {@link utils.xml.xml2csv.constants.XML2CSVType#getCode() type code}.
+   * <li>the value associated with a key is a <code>String[3]</code> with: at index <code>0</code>, the element {@link utils.xml.xml2csv.constants.XML2CSVCardinality#getCode()
+   * cardinality code}, at index <code>1</code> the element {@link utils.xml.xml2csv.constants.XML2CSVType#getCode() type code} and at index <code>2</code> the element
+   * {@link utils.xml.xml2csv.constants.XML2CSVNature#getCode() nature code}.
    * </ul>
    * @return the unstructured element dictionary from which the ordered XML elements where extracted.
    */
