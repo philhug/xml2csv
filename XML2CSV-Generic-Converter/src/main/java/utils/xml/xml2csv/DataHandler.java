@@ -309,8 +309,7 @@ class DataHandler extends DefaultHandler implements LexicalHandler
 
     // If attributes are expected and the current opening element has attributes then:
     // -1- if the element is a leaf element its attributes are recorded and their output is deferred until the element closing is actually met
-    // (depending on whether the element is a tracked one or not in order to have the element attributes appear at the right of the element
-    // content just like spreadsheets do);
+    // (depending on whether the element is a tracked one or not in order to have the element attributes appear after (= below) the element content;
     // -2- if the element is not a leaf element then it cannot belong to the tracked elements (which are a subset of the leaf elements) and there
     // is no use waiting for the element closing: attributes which are tracked are immediately sent to the output.
     // The unstructured dictionary holds the leaf/intermediary information for each entry it holds but when an element pops up from nowhere in a file
@@ -331,10 +330,10 @@ class DataHandler extends DefaultHandler implements LexicalHandler
         // The element does not exit in the dictionary: option -2- by default.
         isLeaf = false;
       }
-      if (isLeaf == false) handleAttributes(); // Option -2-: Un-stacks and handles immediately the attributes of an intermediate element.
+      if (isLeaf == false) handleAttributes(); // Option -2-: un-stacks and handles immediately the attributes of an intermediate element.
       else
       {
-        // Option -1-: the attributes are already stacked and will be handled when the element will be closed.
+        // Option -1-: the attributes are already stacked and will be handled when the element is closed.
       }
     }
   }
@@ -372,21 +371,22 @@ class DataHandler extends DefaultHandler implements LexicalHandler
     }
 
     // Time to handle element attributes for leaf elements if any, and if expected.
-    // The output of leaf element attributes is deferred until the element closing is actually met in order to have the element attributes appear at the right of the element
-    // if it is tracked (and if it is not tracked its attributes won't be either).
-    // The output of intermediate element attributes is handled immediately in startElement because intermediate elements are never tracked.
+    // The output of leaf element attributes is deferred until the element closing is actually met in order to have the element attributes
+    // appear before optimization after (= below) the element (if the element is tracked).
+    // The output of intermediate element attributes was handled in method startElement because intermediate elements are never tracked.
     if (withAttributes == true)
     {
       String[] props = trackedLeafElementsDescription.getDictionary().get(getXPathAsString(currentXMLTagSequence));
       boolean isLeaf = false;
       if (props != null)
       {
-        // OK, the element is defined in the dictionary and its nature leaf/intermediary is defined.
+        // OK, the element is defined in the dictionary and its nature (leaf or intermediary element) is defined.
         isLeaf = XML2CSVNature.isLeaf(props[2]);
       }
       else
       {
-        // The element does not exit in the dictionary and its nature is undefined. It was treated like an intermediary element when the element was opened.
+        // The element does not exit in the dictionary and its nature is undefined.
+        // Its attributes were handled in method startElement like for intermediate elements.
         isLeaf = false;
       }
       if (isLeaf == true) handleAttributes(); // Un-stacks and handles now the attributes of a leaf element.
