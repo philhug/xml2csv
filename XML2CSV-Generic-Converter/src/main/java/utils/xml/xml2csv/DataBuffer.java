@@ -623,7 +623,7 @@ class DataBuffer
                 selectedColums.clear();
                 for (int i = 0; i < trackedLeafElementXPaths.length; i++)
                 {
-                  if (trackedLeafElementParentXPaths[i].equals(trackedParentOpening)) // Equals, not contains => does not includes sub XPaths of trackedParentOpening.
+                  if (trackedLeafElementParentXPaths[i].equals(trackedParentOpening)) // Equals, not contains => does not include sub XPaths of trackedParentOpening.
                   {
                     if (((trackedLeafElementCardinalities[i] == XML2CSVCardinality.ONE_TO_MANY) || (trackedLeafElementCardinalities[i] == XML2CSVCardinality.ZERO_TO_MANY)))
                     {
