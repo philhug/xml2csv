@@ -209,7 +209,7 @@ public class XML2CSVConsoleCommand
       longopts[15] = new LongOpt("log", LongOpt.OPTIONAL_ARGUMENT, null, 'l');
       longopts[16] = new LongOpt("cutoff", LongOpt.OPTIONAL_ARGUMENT, null, 'c');
 
-      // Option with optional argument is followed by ::, option with mandatory argument is followed by : and option without argument is followed by nothing.
+      // An option with optional argument is followed by ::, an option with mandatory argument is followed by : and an option without argument is followed by nothing.
       Getopt g = new Getopt(XML2CSVMisc.DISPLAY_CLASS_NAME, args, "hmvd::arx::i:t:o:b::e:s:p:n:l::c::", longopts, true);
       int option = 0;
 
@@ -280,7 +280,7 @@ public class XML2CSVConsoleCommand
             break;
           case 'l':
             log4JConfigFile = g.getOptarg();
-            if (activateLog4JLog(log4JConfigFile) == false) log4jFailure = true; // Activates the Log4J Log as soon as possible before message are sent to the logger.
+            if (activateLog4JLog(log4JConfigFile) == false) log4jFailure = true; // Activates the Log4J Log as soon as possible before messages are sent to the logger.
             break;
           case 'c':
             cutoffValue = g.getOptarg();
@@ -496,7 +496,7 @@ public class XML2CSVConsoleCommand
       }
       singleOutputFile = new File(outputDir.getAbsolutePath() + XML2CSVMisc.FILE_SEPARATOR + singleOutputFileName);
       // Idiot proof in all circumstances. We make sure the blend output file does not belong to the input XML list (which might occur with a custom blend CSV output filename
-      // awkwardly named like one of the XML input files.
+      // awkwardly named like one of the XML input files).
       boolean collision = false;
       for (int i = 0; i < xmlInputFiles.length; i++)
       {
@@ -726,7 +726,7 @@ public class XML2CSVConsoleCommand
       configFileName = XML2CSVMisc.DEFAULT_LOG4J_PROPERTY_FILE;
     }
 
-    // The custom Log4J configuration file or the built-in Log4J configuration file is reached through the CLASSPATH an opened.
+    // The custom Log4J configuration file or the built-in Log4J configuration file is reached through the CLASSPATH and opened.
     InputStream inputStream = classLoader.getResourceAsStream(configFileName);
 
     // The custom Log4J configuration file is loaded as a Properties instance.

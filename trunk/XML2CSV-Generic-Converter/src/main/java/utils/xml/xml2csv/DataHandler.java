@@ -605,7 +605,7 @@ class DataHandler extends DefaultHandler implements LexicalHandler
   private String getText(boolean trim) throws SAXException
   {
     if (textBuffer == null) return null;
-    String s = "" + textBuffer.toString();
+    String s = XML2CSVMisc.EMPTY_STRING + textBuffer.toString();
     textBuffer = null;
     // "Entity References" parsing issue (example: &lt; , ...).
     // The reader.setFeature call in the main class should prevent the "Entity References" (such as &gt; , see http://www.w3schools.com/xml/xml_syntax.asp)
@@ -817,6 +817,8 @@ class DataHandler extends DefaultHandler implements LexicalHandler
       String[] att = new String[2];
       att[0] = atts.getLocalName(i);
       att[1] = atts.getValue(i);
+      att[1] = EscapeUtils.escapeXML10Chars(att[1], true, true, true, true); // Handles the XML "Entity References" parsing issue (example: &lt; , ...). Details in method getText.
+      att[1] = EscapeUtils.escapeCSVChars(att[1], fieldSeparator); // Escapes CSV control characters if needed. Details in method getText.
       attsList.add(att);
     }
     attributes.put(xpath, attsList);
