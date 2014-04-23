@@ -63,8 +63,11 @@ public class XML2CSVConsoleCommand
   /** Blend output indicator. */
   private static boolean BLEND_MODE = false;
 
+  /** Name space warding indicator. */
+  private static boolean WARDING_MODE = false;
+
   /** Attributes extraction indicator. */
-  private static boolean withAttributes = false;;
+  private static boolean withAttributes = false;
 
   /** Log4J malfunction indicator. */
   private static boolean log4jFailure = false;
@@ -136,7 +139,7 @@ public class XML2CSVConsoleCommand
   {
     System.out.println(XML2CSVMisc.DISPLAY_CLASS_NAME);
     System.out
-        .println("Usage: java utils.xml.xml2csv.XML2CSVConsoleCommand [-h] [-m] [-v] [-d[{degree}]] [-a] [-r] [-x[{variant}]] -i {input dir/file} [-t {template filename}] [-o {output dir}] [-b[{blend filename}]] [-e {output encoding}] [-s {output separator}]  [-p {+ filter file}] [-n {- filter file}] [-l[{log4J config}]] [-c{limit}]");
+        .println("Usage: java utils.xml.xml2csv.XML2CSVConsoleCommand [-h] [-m] [-v] [-d[{degree}]] [-a] [-r] [-x[{variant}]] -i {input dir/file} [-t {template filename}] [-o {output dir}] [-b[{blend filename}]] [-e {output encoding}] [-s {output separator}]  [-p {+ filter file}] [-n {- filter file}] [-l[{log4J config}]] [-c{limit}] [-w]");
     System.out.println("with:");
     System.out.println("-h or --help: displays this help text, then aborts the program.");
     System.out.println("-m or --mute: mutes the program. In this mode nothing is displayed at runtime. Useful for batch integration where the return code alone matters.");
@@ -174,6 +177,7 @@ public class XML2CSVConsoleCommand
             + XML2CSVMisc.DEFAULT_LOG4J_PROPERTY_FILE + ">.");
     System.out.println("-c or -c{limit} or --cutoff{limit}: output file cutoff limit. If a valid number is provided alongside it will be used instead of the default built-in <"
         + XML2CSVMisc.DEFAULT_CUTOFF_LIMIT + "> value to fix a row count threshold for all CSV output files (that is: {limit}x1024 lines).");
+    System.out.println("-w or --ward: performs name space aware parsing. When omitted, XML name spaces are plainly ignored by the program.");
     System.out
         .println("Parameter -h overrides any other parameter. Parameter -m overrides -v and -d. Parameter -i is mandatory. Parameters -x and -r are exclusive. Parameters -p and -n are exclusive. Parameter -t is ignored when parameter -i points to one single file.");
     System.out
@@ -190,7 +194,7 @@ public class XML2CSVConsoleCommand
     {
       // We read & check the input parameters.
       boolean commandlineError = false;
-      LongOpt[] longopts = new LongOpt[17];
+      LongOpt[] longopts = new LongOpt[18];
       longopts[0] = new LongOpt("help", LongOpt.NO_ARGUMENT, null, 'h');
       longopts[1] = new LongOpt("mute", LongOpt.NO_ARGUMENT, null, 'm');
       longopts[2] = new LongOpt("verbose", LongOpt.NO_ARGUMENT, null, 'v');
@@ -208,9 +212,10 @@ public class XML2CSVConsoleCommand
       longopts[14] = new LongOpt("negative", LongOpt.REQUIRED_ARGUMENT, null, 'n');
       longopts[15] = new LongOpt("log", LongOpt.OPTIONAL_ARGUMENT, null, 'l');
       longopts[16] = new LongOpt("cutoff", LongOpt.OPTIONAL_ARGUMENT, null, 'c');
+      longopts[17] = new LongOpt("ward", LongOpt.NO_ARGUMENT, null, 'w');
 
       // An option with optional argument is followed by ::, an option with mandatory argument is followed by : and an option without argument is followed by nothing.
-      Getopt g = new Getopt(XML2CSVMisc.DISPLAY_CLASS_NAME, args, "hmvd::arx::i:t:o:b::e:s:p:n:l::c::", longopts, true);
+      Getopt g = new Getopt(XML2CSVMisc.DISPLAY_CLASS_NAME, args, "hmvd::arx::i:t:o:b::e:s:p:n:l::c::w", longopts, true);
       int option = 0;
 
       while ((option = g.getopt()) != -1)
@@ -286,6 +291,9 @@ public class XML2CSVConsoleCommand
             cutoffValue = g.getOptarg();
             if (computeCutoff(cutoffValue) == false) cutoffFailure = true;
             break;
+          case 'w':
+            WARDING_MODE = true;
+            break;
           case '?':
             commandlineError = true;
             break;
@@ -309,6 +317,7 @@ public class XML2CSVConsoleCommand
       if (negativeFilterFile != null) XML2CSVLoggingFacade.log(XML2CSVLogLevel.INFO, "using negative filter file <" + negativeFilterFile + ">.");
       if (log4JConfigFile != null) XML2CSVLoggingFacade.log(XML2CSVLogLevel.INFO, "using Log4J with custom configuration file <" + log4JConfigFile + ">.");
       if (cutoff != -1) XML2CSVLoggingFacade.log(XML2CSVLogLevel.INFO, "cutoff limit activated. No CSV output file will hold more than <" + cutoff + "> lines.");
+      if (WARDING_MODE == true) XML2CSVLoggingFacade.log(XML2CSVLogLevel.INFO, "warding mode activated. Name space aware parsing will be performed.");
 
       if (log4jFailure == true)
       {
@@ -546,6 +555,7 @@ public class XML2CSVConsoleCommand
     try
     {
       XML2CSVGenericGenerator generator = new XML2CSVGenericGenerator(singleOutputFile, outputDir, fieldSeparator, encoding, level, cutoff);
+      generator.setWarding(WARDING_MODE);
       generator.generate(xmlInputFiles, xmlTemplateFileName, expectedElementXpathList, discardedElementXpathList, withAttributes);
     }
     catch (XML2CSVException e)

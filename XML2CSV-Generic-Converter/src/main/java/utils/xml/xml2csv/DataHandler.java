@@ -121,6 +121,9 @@ class DataHandler extends DefaultHandler implements LexicalHandler
   /** Attributes extraction indicator. */
   private boolean withAttributes = false;
 
+  /** Name space awareness indicator. */
+  private boolean withNamespaces = false;
+
   /** Attributes recorded in a hash map where the key is The.Element.Path and the value an ordered list of String arrays providing each: attribute name (index 0), value (index 1). */
   private HashMap<String, ArrayList<String[]>> attributes = new HashMap<String, ArrayList<String[]>>();
 
@@ -136,9 +139,10 @@ class DataHandler extends DefaultHandler implements LexicalHandler
    * @param level the chosen <code>XML2CSVOptimization</code> level (defaults to <code>STANDARD</code> it left <code>null</code>).
    * @param singleHeader <code>true</code> to have the column names displayed for the first file only, or <code>false</code> to have the column names atop each output file.
    * @param withAttributes <code>true</code> if element attributes should be extracted as well or <code>false</code> otherwise.
+   * @param withNamespaces <code>true</code> if name space aware parsing should be performed or <code>false</code> otherwise.
    */
   public DataHandler(OutputWriterFacade outputWriterFacade, String fieldSeparator, Charset encoding, ElementsDescription leafElementsDescription, String[] expectedElementsXpaths,
-      String[] discardedElementsXpaths, XML2CSVOptimization level, boolean singleHeader, boolean withAttributes)
+      String[] discardedElementsXpaths, XML2CSVOptimization level, boolean singleHeader, boolean withAttributes, boolean withNamespaces)
   {
     super();
 
@@ -161,6 +165,8 @@ class DataHandler extends DefaultHandler implements LexicalHandler
     this.leafElementsDescription = leafElementsDescription;
 
     this.withAttributes = withAttributes;
+
+    this.withNamespaces = withNamespaces;
 
     // Convention1: a null expectedElementsXpaths object means that there is no expected element list, or in other words, that all XML leaf elements are expected to
     // be sent to the CSV output file.
@@ -192,6 +198,22 @@ class DataHandler extends DefaultHandler implements LexicalHandler
 
     if ((singleHeader == false) || ((singleHeader == true) && (parsedXMLDocumentCount == 1)))
     {
+      if (withNamespaces == true)
+      {
+        // In case of name space aware parsing the name space list is displayed on the very first line (something like alias1=namespace1 alias2=namespace2 ...)
+        String namespaceList = buildCSVOutputNamespaceLine(trackedLeafElementsDescription.getNamespaces());
+        if (namespaceList.isEmpty() == false)
+        {
+          // Both name space aware parsing is activated and the XML input files use name spaces. The name space list is displayed.
+          emit(namespaceList);
+          ls(); // Next line.
+          ls(); // Next line.
+        }
+        else
+        {
+          // Name space aware parsing is activated but the XML input files do not use name spaces. Nothing is displayed.
+        }
+      }
       // Before the first XML input file is processed the full XPaths of the tracked element's parents are sent to the CSV output file.
       // emit(buildCSVOutputHeaderLine(trackedLeafElementParentXPaths));
       // ls(); // Next line.
@@ -282,9 +304,21 @@ class DataHandler extends DefaultHandler implements LexicalHandler
   public void startElement(String uri, String localName, String qName, Attributes atts) throws SAXException
   {
     // Adds the current tag to the current tag list (element opening).
-    String eName = localName; // We use the current element name without its prefix, that is localName and not qName.
+    String eName = null;
+    if (withNamespaces == false)
+    {
+      // Space less parsing: we use the current element name without its name space alias/prefix, that is, localName and not qName.
+      eName = localName;
+    }
+    else
+    {
+      // Space full parsing: we use the current element name with its name space alias/prefix, that is, qName and not localName.
+      eName = qName;
+    }
     // Character @, which should not appear in correct XML tag names, is used by this handler later on to differentiate attributes from elements.
-    if (eName.contains("@")) throw new SAXException("Bad XML holding tags containing @ characters, which are forbidden.");
+    if (localName.contains("@")) throw new SAXException("Bad XML holding tags containing '@' characters, which are forbidden.");
+    // Character :, which should not appear in correct XML tag names, is used by this handler for name space aware parsing to separate the element's short name from its prefix.
+    if (localName.contains(":")) throw new SAXException("Bad XML holding tags containing ':' characters, which are forbidden.");
     currentXMLTagSequence.add(eName);
 
     // Root element detection
@@ -705,7 +739,7 @@ class DataHandler extends DefaultHandler implements LexicalHandler
       XML2CSVType[] trackedLeafElementTypes = temp5.toArray(ttemp);
       // The tracked leaf elements are backed to the same dictionary as the leaf elements (the former being a subset of the latter).
       trackedLeafElementsDescription = new ElementsDescription(trackedLeafElementShortNames, trackedLeafElementXPaths, trackedLeafElementParentXPaths,
-          trackedLeafElementCardinalities, trackedLeafElementTypes, leafElementsDescription.getDictionary());
+          trackedLeafElementCardinalities, trackedLeafElementTypes, leafElementsDescription.getDictionary(), leafElementsDescription.getNamespaces());
     }
   }
 
@@ -743,6 +777,28 @@ class DataHandler extends DefaultHandler implements LexicalHandler
     result.append(content);
     for (int i = index; i < numberOfFields - 1; i++)
       result.append(fieldSeparator);
+    return result.toString();
+  }
+
+  /**
+   * Builds a CSV line listing the different name spaces and their aliases.
+   * @param namespaces the name space list.
+   * @return the formatted CSV line ready to be sent to the CSV output file.
+   */
+  private String buildCSVOutputNamespaceLine(HashMap<String, String> namespaces)
+  {
+    StringBuffer result = new StringBuffer();
+    Iterator<String> keys = namespaces.keySet().iterator();
+    if (keys.hasNext()) result.append("NAMESPACES: ");
+    while (keys.hasNext())
+    {
+      String alias = keys.next();
+      result.append(alias);
+      result.append("=");
+      String fullName = namespaces.get(alias);
+      result.append(fullName);
+      if (keys.hasNext()) result.append(" ");
+    }
     return result.toString();
   }
 

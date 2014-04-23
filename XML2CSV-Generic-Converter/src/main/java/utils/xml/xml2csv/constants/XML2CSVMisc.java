@@ -1,7 +1,7 @@
 /***********************************************************************************************************
  * XML2CSV-Generic-Converter - flatten XML into CSV to suit your mood.
  * Copyright 2014 Laurent Popieul (lochrann@rocketmail.com)
- * ********************************************************************************************************* 
+ * *********************************************************************************************************
  * This file is part of XML2CSV-Generic-Converter.
  * This program is free software: you can redistribute it and/or modify it under the terms of the GNU
  * General Public License as published by the Free Software Foundation, either version 3 of the License,
@@ -68,4 +68,7 @@ public abstract class XML2CSVMisc
 
   /** The default blend CSV output file name. */
   public static final String DEFAULT_BLEND_OUTPUT_FILENAME = "output.csv";
+
+  /** The displayed alias name of the default name space. */
+  public static final String DEFAULT_NAMESPACE_ALIAS = "{default}";
 }
