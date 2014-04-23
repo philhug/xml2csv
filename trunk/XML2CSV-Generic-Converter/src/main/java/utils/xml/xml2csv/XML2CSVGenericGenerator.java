@@ -57,7 +57,7 @@ public class XML2CSVGenericGenerator
   private boolean activeOutput = false;
 
   /** Blend output indicator. */
-  private static boolean BLEND_MODE = false;
+  private boolean BLEND_MODE = false;
 
   /** Direct OutputStream. */
   private OutputStream output = null;
@@ -79,6 +79,9 @@ public class XML2CSVGenericGenerator
 
   /** The chosen output cutoff limit. */
   private long cutoff = -1L;
+
+  /** Name space awareness indicator. */
+  private boolean withNamespaces = false;
 
   /**
    * <code>XML2CSVGenericGenerator</code> constructor.<br>
@@ -272,7 +275,7 @@ public class XML2CSVGenericGenerator
       XML2CSVLoggingFacade.log(XML2CSVLogLevel.VERBOSE, "computing XML structure...");
       XML2CSVLoggingFacade.log(null, null, XML2CSVMisc.LINE);
     }
-    StructureHandler structureHandler = new StructureHandler(withAttributes); // XML structure analysis handler initialization.
+    StructureHandler structureHandler = new StructureHandler(withAttributes, withNamespaces); // XML structure analysis handler initialization.
     try
     {
       XML2CSVLoggingFacade.log(XML2CSVLogLevel.VERBOSE, "using XML input file <" + fileToUseForStructureAnalysis.getName() + "> for template.");
@@ -394,7 +397,7 @@ public class XML2CSVGenericGenerator
 
       // The XML data handler is initialized. It will be reset/reused for each XML input file.
       DataHandler dataHandler = new DataHandler(outputWriterFacade, csvFieldSeparator, encoding, leafElementsDescription, xmlExpectedElementsXPaths, xmlDiscardedElementsXPaths,
-          level, BLEND_MODE, withAttributes);
+          level, BLEND_MODE, withAttributes, withNamespaces);
 
       // Each of the XML input files are processed in turn.
       if (XML2CSVLoggingFacade.VERBOSE_MODE == true)
@@ -856,5 +859,14 @@ public class XML2CSVGenericGenerator
   public void setCutoff(long cutoff)
   {
     this.cutoff = cutoff;
+  }
+
+  /**
+   * Activates or deactivates name space aware parsing.
+   * @param warding <code>true</code> to perform name space aware parsing, and <code>false</code> otherwise.
+   */
+  public void setWarding(boolean warding)
+  {
+    this.withNamespaces = warding;
   }
 }

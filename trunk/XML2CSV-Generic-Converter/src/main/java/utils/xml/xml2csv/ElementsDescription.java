@@ -51,6 +51,9 @@ class ElementsDescription
   /** A hash map providing unstructured details about the surrounding XML structure. */
   private HashMap<String, String[]> dictionary = null;
 
+  /** A hash map providing details about name spaces. */
+  private HashMap<String, String> namespaces = null;
+
   /**
    * <code>ElementsDescription</code> constructor.
    * @param elementsXPaths the array listing the XML elements XPaths.
@@ -58,9 +61,10 @@ class ElementsDescription
    * @param elementsCardinalities the array listing the XML elements cardinalities.
    * @param elementsTypes the array listing the XML elements types.
    * @param dictionary the unstructured dictionary from which the XML elements are extracted.
+   * @param namespaces the name spaces.
    */
   public ElementsDescription(String[] elementsShortNames, String[] elementsXPaths, String[] elementsParentXPaths, XML2CSVCardinality[] elementsCardinalities,
-      XML2CSVType[] elementsTypes, HashMap<String, String[]> dictionary)
+      XML2CSVType[] elementsTypes, HashMap<String, String[]> dictionary, HashMap<String, String> namespaces)
   {
     this.elementsShortNames = elementsShortNames;
     this.elementsXPaths = elementsXPaths;
@@ -68,6 +72,7 @@ class ElementsDescription
     this.elementsCardinalities = elementsCardinalities;
     this.elementsTypes = elementsTypes;
     this.dictionary = dictionary;
+    this.namespaces = namespaces;
   }
 
   /**
@@ -138,6 +143,20 @@ class ElementsDescription
   public HashMap<String, String[]> getDictionary()
   {
     return dictionary;
+  }
+
+  /**
+   * Returns the list of name spaces defined in the XML structure.
+   * The list is provided as a <code>HashMap&lt;String, String&gt;</code> where:<br>
+   * <ul>
+   * <li>keys are name spaces aliases, plus one {@link utils.xml.xml2csv.constants.XML2CSVMisc#DEFAULT_NAMESPACE_ALIAS default} key for the default name space;
+   * <li>the value associated with a key is the full name space string value.
+   * </ul>
+   * @return the name space list.
+   */
+  public HashMap<String, String> getNamespaces()
+  {
+    return namespaces;
   }
 
   /**

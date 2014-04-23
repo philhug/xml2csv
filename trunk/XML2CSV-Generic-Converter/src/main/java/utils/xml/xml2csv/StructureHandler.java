@@ -87,6 +87,9 @@ class StructureHandler extends DefaultHandler implements LexicalHandler
    */
   private HashMap<String, ArrayList<String[]>> attributes = new HashMap<String, ArrayList<String[]>>();
 
+  /** Name spaces met where the key is the name space alias and the value the name space full name. */
+  private HashMap<String, String> namespaces = new HashMap<String, String>();
+
   /** Ordered list of the currently parsed XML tag sequence (that is, for &lt;A&gt;&lt;B&gt;&lt;C2&gt;, {A,B,C2}). */
   private ArrayList<String> currentXMLTagSequence = new ArrayList<String>();
 
@@ -129,14 +132,19 @@ class StructureHandler extends DefaultHandler implements LexicalHandler
   /** Attributes extraction indicator. */
   private boolean withAttributes = false;
 
+  /** Name space awareness indicator. */
+  private boolean withNamespaces = false;
+
   /**
    * <code>StructureHandler</code> constructor.
    * @param withAttributes <code>true</code> if element attributes should be extracted as well or <code>false</code> otherwise.
+   * @param withNamespaces <code>true</code> if name space aware parsing should be performed or <code>false</code> otherwise.
    */
-  public StructureHandler(boolean withAttributes)
+  public StructureHandler(boolean withAttributes, boolean withNamespaces)
   {
     super();
     this.withAttributes = withAttributes;
+    this.withNamespaces = withNamespaces;
   }
 
   // ================================================================================
@@ -171,10 +179,35 @@ class StructureHandler extends DefaultHandler implements LexicalHandler
   public void startElement(String uri, String localName, String qName, Attributes atts) throws SAXException
   {
     // Adds the current tag to the current tag list (element opening).
-    String eName = localName; // We use the current element name without its prefix, that is localName and not qName.
+    String eName = null;
+    if (withNamespaces == false)
+    {
+      // Space less parsing: we use the current element name without its name space alias/prefix, that is, localName and not qName.
+      eName = localName;
+    }
+    else
+    {
+      // Space full parsing: we use the current element name with its name space alias/prefix, that is, qName and not localName.
+      eName = qName;
+    }
     // Character @, which should not appear in correct XML tag names, is used by this handler later on to differentiate attributes from elements.
-    if (eName.contains("@")) throw new SAXException("Bad XML holding tags containing @ characters, which are forbidden.");
+    if (localName.contains("@")) throw new SAXException("Bad XML holding tags containing '@' characters, which are forbidden.");
+    // Character :, which should not appear in correct XML tag names, is used by this handler for name space aware parsing to separate the element's short name from its prefix.
+    if (localName.contains(":")) throw new SAXException("Bad XML holding tags containing ':' characters, which are forbidden.");
     currentXMLTagSequence.add(eName);
+
+    // Name space collation, if space full parsing is performed.
+    if (withNamespaces)
+    {
+      if ((uri != null) && (uri.trim().isEmpty() == false) && (qName != null) && (qName.trim().isEmpty() == false))
+      {
+        String alias = null;
+        if (qName.indexOf(":") != -1) alias = qName.substring(0, qName.indexOf(":"));
+        else
+          alias = XML2CSVMisc.DEFAULT_NAMESPACE_ALIAS;
+        namespaces.put(alias, uri);
+      }
+    }
 
     // Current element contents buffer reset before the element is started.
     textBuffer = null;
@@ -1254,7 +1287,7 @@ class StructureHandler extends DefaultHandler implements LexicalHandler
       leafElementsTypes[i] = getLeafElementType(i);
     }
     HashMap<String, String[]> dictionary = getAllElementsDescription();
-    return new ElementsDescription(leafElementsShortNames, leafElementsXPaths, leafElementsParentXPaths, leafElementsCardinalities, leafElementsTypes, dictionary);
+    return new ElementsDescription(leafElementsShortNames, leafElementsXPaths, leafElementsParentXPaths, leafElementsCardinalities, leafElementsTypes, dictionary, namespaces);
   }
 
   /**
