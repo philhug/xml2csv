@@ -1,0 +1,3 @@
+-- Sample filter file, UTF-8 encoded. List of composite or leaf XPaths.
+
+Root.Row.Data.lib1:AddAmount
