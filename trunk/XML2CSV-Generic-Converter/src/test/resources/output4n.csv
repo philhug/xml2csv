@@ -1,0 +1,24 @@
+NAMESPACES: lib2=http://xml2csv/sample/lib2 lib1=http://xml2csv/sample/lib1 {default}=http://xml2csv/sample/input3
+
+Root.Head.Header;Root.Row@country;Root.Row.ExtraUnexpectedTag;Root.Row.Data@idx;Root.Row.Data.Data0;Root.Row.Data.Amount;Root.Row.Data.Amount@currency;Root.Row.Data.Data1;Root.Row.Data.SubData.SubData1;Root.Row.Data.Date;Root.Row.Date;Root.Row.AddDate;Root.Row.Other@flavor;Root.Row.Other@id;Root.Row.Other.Data.Data1;Root.Row.Other.Data.Data1@owner;Root.Row.Other.Data.Data2;Root.Row.Other.Data.Data2@owner;Root.Row.Context.lib1:Name;Root.Row.Context.lib2:Name;Root.Row.Context.lib1:AddName;Root.Row.Context.lib1:AddName@att
+H1;;;;;;;;;;;;;;;;;;;;;
+H2;;;;;;;;;;;;;;;;;;;;;
+H3;;;;;;;;;;;;;;;;;;;;;
+;NO;;333;true;123;nok;;SD1a;;;;;0;1;Hjørdis;2;Lars;N1a;N2a;;
+;NO;;333;true;123;nok;;SD1b;;;;;0;1;Hjørdis;2;Lars;N1a;N2a;;
+;NO;;;;;;;;;2014-01-17;;;0;1;Hjørdis;2;Lars;N1a;N2a;;
+;NO;;;;;;;;;;;;0;1;Hjørdis;2;Lars;N1a;N2a;AN1;
+;NO;;;;;;;;;;;;0;1;Hjørdis;2;Lars;N1a;N2a;;van1
+;NO;;;;;;;;;;;;0;1;Hjørdis;2;Lars;N1a;N2a;AN2;
+;IR;ExtraUnexpectedValue0;111;false;;;a;SD2a;;;2001-01-01;zzz;4;34.2;;56;Áine;N1b;N2b;;
+;IR;ExtraUnexpectedValue0;555;true;4567;eur;b;SD3a;;;2001-01-01;zzz;4;34.2;;56;Áine;N1b;N2b;;
+;IR;ExtraUnexpectedValue0;555;true;4567;eur;b;SD3b;;;2001-01-01;zzz;4;34.2;;56;Áine;N1b;N2b;;
+;IR;ExtraUnexpectedValue0;555;true;4567;eur;b;SD3c;;;2001-01-01;zzz;4;34.2;;56;Áine;N1b;N2b;;
+;IR;ExtraUnexpectedValue0;;;;;;;;2014-01-14;2001-01-01;zzz;4;34.2;;56;Áine;N1b;N2b;;
+;IR;ExtraUnexpectedValue0;;;;;;;;2014-01-15;2001-01-01;zzz;4;34.2;;56;Áine;N1b;N2b;;
+;IR;ExtraUnexpectedValue0;;;;;;;;2014-01-16;2001-01-01;zzz;4;34.2;;56;Áine;N1b;N2b;;
+;IR;ExtraUnexpectedValue0;;;;;;;;;2001-01-01;zzz;4;34.2;;56;Áine;N1b;N2b;AN3;
+;IR;ExtraUnexpectedValue0;;;;;;;;;2001-01-01;zzz;4;34.2;;56;Áine;N1b;N2b;AN4;
+;IR;ExtraUnexpectedValue0;;;;;;;;;2001-01-01;zzz;4;34.2;;56;Áine;N1b;N2b;AN5;
+;FR;ExtraUnexpectedValue;777;;;;;;2014-01-11;;;;;;;;;;;;
+;FR;ExtraUnexpectedValue;;;;;;;;;;;;;;;;;;AN6;
