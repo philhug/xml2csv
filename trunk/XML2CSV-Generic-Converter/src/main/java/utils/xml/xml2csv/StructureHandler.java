@@ -393,7 +393,7 @@ class StructureHandler extends DefaultHandler implements LexicalHandler
       String[] props = new String[2];
       // By default, a new element is supposed mandatory and mono-occurrence and might be set to optional and/or unbounded later on.
       props[0] = XML2CSVCardinality.ONE_TO_ONE.getCode();
-      // By default, a new element is supposed to be string-like.
+      // By default, a new element is of UNKNOWN type, which will be narrowed later on for something more accurate for a leaf element.
       props[1] = XML2CSVType.UNKNOWN.getCode();
       properties.put(xpath, props);
     }
