@@ -40,7 +40,7 @@ Aaron Renn's GetOpt helped to create a convenient console command version in a c
 Unix fashion. It's not the 1st time. Well, thanks again, Aaron.
 
 Special care was paid to memory usage to ensure that the program would behave well and fast
-even against very big XML files, provided that the data dependency level remain under control
+even against very big XML files, provided that the data dependency level remains under control
 (please refer to the documentation for further information).
 DOM-like access to XML files was banished from the outset in favor of more basic but far
 more memory-friendly SAX parsing.
