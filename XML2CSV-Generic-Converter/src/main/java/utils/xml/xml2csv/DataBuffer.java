@@ -37,7 +37,7 @@ import org.xml.sax.SAXException;
  * recordTrackedParentOpening} and {@link utils.xml.xml2csv.DataBuffer#recordTrackedParentClosing(String) recordTrackedParentClosing}).<br>
  * One new line is added to the buffer for each parent reference too.<br>
  * When the buffer is complete and consistent (devised from <i><u>outside</u></i> the class) two special {@link utils.xml.xml2csv.DataBuffer#optimizeV1() optimizationV1} and
- * {@link utils.xml.xml2csv.DataBuffer#optimizeV2() optimizationV2} methods make it possible to have data packed depending on the chosen optimization
+ * {@link utils.xml.xml2csv.DataBuffer#optimizeV23() optimizationV23} methods make it possible to have data packed depending on the chosen optimization
  * {@link utils.xml.xml2csv.constants.XML2CSVOptimization flavor}.<br>
  * One final {@link utils.xml.xml2csv.DataBuffer#flush() flush} method makes it possible to send the buffer data to the expected CSV output file through
  * the CSV output writer {@link utils.xml.xml2csv.OutputWriterFacade facade} object provided to the class instance constructor.<br>
@@ -135,19 +135,25 @@ class DataBuffer
       StringBuffer result = new StringBuffer();
       for (int i = 0; i < trackedLeafElementXPaths.length - 1; i++)
       {
-        field = line[i];
+        if (trackedLeafElementXPaths[i].endsWith("@" + XML2CSVMisc.VIRTUAL_ATTRIBUTE) == false)
+        {
+          field = line[i];
+          if (field != null)
+          {
+            result.append(field);
+            emptyLine = false;
+          }
+          result.append(fieldSeparator);
+        }
+      }
+      field = line[trackedLeafElementXPaths.length - 1];
+      if (trackedLeafElementXPaths[trackedLeafElementXPaths.length - 1].endsWith("@" + XML2CSVMisc.VIRTUAL_ATTRIBUTE) == false)
+      {
         if (field != null)
         {
           result.append(field);
           emptyLine = false;
         }
-        result.append(fieldSeparator);
-      }
-      field = line[trackedLeafElementXPaths.length - 1];
-      if (field != null)
-      {
-        result.append(field);
-        emptyLine = false;
       }
       if (emptyLine == false) return result.toString();
       else
@@ -247,7 +253,7 @@ class DataBuffer
   /**
    * Sends a string to the CSV output file.
    * @param s the string to send.
-   * @throws <code>SAXException</code> in case of error.
+   * @throws SAXException in case of error.
    */
   private void emit(String s) throws SAXException
   {
@@ -264,7 +270,7 @@ class DataBuffer
 
   /**
    * Sends a line separator to the CSV output file (CR-LF, CR or LF depending on the underneath OS).
-   * @throws <code>SAXException</code> in case of error.
+   * @throws SAXException in case of error.
    */
   private void ls() throws SAXException
   {
@@ -348,7 +354,7 @@ class DataBuffer
 
   /**
    * Flushes this data buffer to the CSV output file, then {@link utils.xml.xml2csv.DataBuffer#reset() resets} it.
-   * @throws <code>SAXException</code> in case of error.
+   * @throws SAXException in case of error.
    */
   public void flush() throws SAXException
   {
@@ -381,18 +387,178 @@ class DataBuffer
   }
 
   /**
-   * Optimizes the data currently buffered, expected complete and consistent.
-   * Performs an {@link utils.xml.xml2csv.constants.XML2CSVOptimization#EXTENSIVE_V2 EXTENSIVE_V2} buffer line subset optimization, which is both a variant of <code>STANDARD</code>
-   * and <code>EXTENSIVE_V1</code>.<br>
-   * Optimization ends when the last buffer line subset has been processed (when the last line block enclosed by tracked element's parent opening/closing has been performed).
-   * @return true if the optimization changed something in the buffer.
-   * @throws <code>SAXException</code> in case of error.
+   * Starting from line <code>inf</code>, scans the data buffer looking for the line indicating the closing of <code>xpath</code>
+   * @param inf the search starting line in the data buffer.
+   * @param xpath the closing XPath to find.
+   * @return the line index in the data buffer corresponding to the closing XPath.
+   * @throws SAXException in case of error.
    */
-  public boolean optimizeV2() throws SAXException
+  private int findParentClosing(int inf, String xpath) throws SAXException
   {
+    // OK: a tracked parent opening was met. We look for the related tracked parent closing index.
+    int sup = inf;
+    boolean foundSup = false;
+    while ((sup < buffer.size()) && (foundSup == false))
+    {
+      String[] supLine = buffer.get(sup);
+      if (supLine[trackedLeafElementXPaths.length + 1] == null) sup++;
+      else
+      {
+        if (xpath.equals(supLine[trackedLeafElementXPaths.length + 1])) foundSup = true;
+        else
+          sup++;
+      }
+    }
+    if (foundSup == false) // The related tracked parent closing index was not found!
+    {
+      // This can't be unless a nasty bug occurred. Each tracked parent opening should have its counterpart tracked parent closing unless the buffer is not consistent,
+      // and if it happens it is not consistent then optimization is a nonsense. We raise an exception in order to avoid hazardous behavior.
+      throw new SAXException("Optimization bug. Bad recording of tracked element's parent in the data buffer.");
+    }
+    return sup;
+  }
+
+  /**
+   * Searches the data buffer for pointless virtual attributes (= virtual attribute values provided to tracked parent elements without actual content) and deletes them.
+   * @throws SAXException in case of error.
+   */
+  private void cleanRawBuffer() throws SAXException
+  {
+    // The purpose of this fine tuning method is better explained with an example.
+    // Without buffer cleaning the following XML in EXTENSIVE_V3 mode will generate 2 virtual attributes, one for Root.Row.Other and one for Root.Row.Other.Data.
+    // Because Root.Row.Other is repeated those virtual attributes won't be moved "upwards" during EXTENSIVE_V3 packing of Root.Row but the corresponding lines
+    // will receive downward copy of "IE" and "Sample" and, even if the actual virtual attributes are never displayed, will display 2 extra pointless lines
+    // in the output file.
+    // A buffer cleaning deletes the 2 virtual attributes values before they get a chance to become annoying.
+    // <Root><Row country="IE">
+    // <Name>Sample</Name>
+    // <Data idx="123"><Date>2014-03-21</Date></Data>
+    // <Other><Data/></Other>
+    // <Other><Data/></Other>
+    // </Row></Root>
+    if (XML2CSVLoggingFacade.DEBUG_MODE == true)
+    {
+      XML2CSVLoggingFacade.log(XML2CSVLogLevel.DEBUG3, "<" + buffer.size() + "> lines in buffer before raw buffer cleaning. Original content:");
+      displayBufferContent();
+    }
+    // Step 1: the list of tracked elements without actual data is devised from the raw data buffer. XPaths of parent blocs without data are collected.
+    // Virtual attribute values are not seen as actual data.
+    HashMap<String, ArrayList<int[]>> datalessXPaths = new HashMap<String, ArrayList<int[]>>();
+    int inf = 0;
+    while (inf < buffer.size())
+    {
+      // The main loop moves through the buffer from the beginning to the end (the inf index is incremented accordingly).
+      // Each time a tracked parent opening is met (in column trackedLeafElementXPaths.length) the next closing index of the same kind is searched.
+      String[] infLine = buffer.get(inf);
+      String trackedParentOpening = infLine[trackedLeafElementXPaths.length];
+      if (trackedParentOpening == null) inf++;
+      else
+      {
+        // OK: a tracked parent opening was met. We look for the related tracked parent closing index.
+        int sup = findParentClosing(inf, trackedParentOpening);
+        // Between lines inf and sup are recorded all the data of the tracked parent element trackedParentOpening.
+        // Because this is a raw buffer, each buffer line holds at most one non null value.
+        boolean dataless = true;
+        for (int i = inf; i < sup; i++)
+        {
+          String[] line = buffer.get(i);
+          for (int j = 0; j < line.length - 2; j++)
+          {
+            if ((line[j] != null) && (line[j] != XML2CSVMisc.VIRTUAL_ATTRIBUTE))
+            {
+              dataless = false;
+              break;
+            }
+          }
+        }
+        // If the tracked parent didn't contain any data it is added to the list with its inf and sub limits.
+        // The inf and sub limits make it possible to handle multi-occurrence elements properly (one might be empty and the other one not).
+        if (dataless == true)
+        {
+          ArrayList<int[]> limitSet = datalessXPaths.get(trackedParentOpening);
+          if (limitSet == null) limitSet = new ArrayList<int[]>();
+          int[] currentLimits = { inf, sup };
+          limitSet.add(currentLimits);
+          datalessXPaths.put(trackedParentOpening, limitSet);
+        }
+        inf++;
+      }
+    }
+    // Step 2: the buffer is read again and each time a virtual element attribute value is met if the element's XPath belongs to the list of tracked empty parent elements
+    // with compatibles inf and sup limits it is deleted.
+    boolean atLeastOneVirtualAttributeRemoved = false;
+    for (int i = 0; i < buffer.size(); i++)
+    {
+      String[] line = buffer.get(i);
+      int indexOfVirtualValue = -1;
+      for (int j = 0; j < line.length - 2; j++) // The last two columns of each line are dedicated to parent opening & closing tracking.
+      {
+        if ((line[j] != null) && ((line[j].equals(XML2CSVMisc.VIRTUAL_ATTRIBUTE))))
+        {
+          indexOfVirtualValue = j;
+          break;
+        }
+      }
+      if (indexOfVirtualValue != -1)
+      {
+        String virtualAttributeXPath = trackedLeafElementXPaths[indexOfVirtualValue];
+        if (virtualAttributeXPath.endsWith(XML2CSVMisc.VIRTUAL_ATTRIBUTE))
+        {
+          // OK. This is a real virtual attribute associated with a virtual attribute XPath.
+          String elementXPath = virtualAttributeXPath.substring(0, virtualAttributeXPath.indexOf("@"));
+          if (datalessXPaths.containsKey(elementXPath))
+          {
+            ArrayList<int[]> limitSet = datalessXPaths.get(elementXPath);
+            for (int k = 0; k < limitSet.size(); k++)
+            {
+              int[] limits = limitSet.get(k);
+              if ((i >= limits[0]) && (i <= limits[1])) // Testing the limits ensures we are dealing with the right element occurrence if it is a multi-occurrence element.
+              {
+                atLeastOneVirtualAttributeRemoved = true;
+                line[indexOfVirtualValue] = null;
+              }
+            }
+          }
+        }
+        else
+        {
+          // This is not a virtual attribute but a regular attribute value which happens to be the same character sequence as the one used for virtual attributes.
+          // We do nothing.
+        }
+      }
+    }
+    if (atLeastOneVirtualAttributeRemoved == true)
+    {
+      if (XML2CSVLoggingFacade.DEBUG_MODE == true)
+      {
+        XML2CSVLoggingFacade.log(XML2CSVLogLevel.DEBUG3, "<" + buffer.size() + "> lines in buffer after raw buffer cleaning. Final content:");
+        displayBufferContent();
+      }
+    }
+    else
+      XML2CSVLoggingFacade.log(XML2CSVLogLevel.DEBUG3, "buffer left unchanged after cleaning.");
+  }
+
+  /**
+   * Optimizes the data currently buffered, expected complete and consistent.
+   * Shared buffer optimization method for {@link utils.xml.xml2csv.constants.XML2CSVOptimization#EXTENSIVE_V2 EXTENSIVE_V2} and
+   * {@link utils.xml.xml2csv.constants.XML2CSVOptimization#EXTENSIVE_V3 EXTENSIVE_V3} optimizations, based on the identical algorithm variant of both <code>STANDARD</code> and
+   * <code>EXTENSIVE_V1</code> optimizations.<br>
+   * The difference between <code>EXTENSIVE_V2</code> and <code>EXTENSIVE_V3</code> optimizations concerns virtual attributes which do not exist in <code>EXTENSIVE_V2</code> mode
+   * and are added alongside parsing in <code>EXTENSIVE_V3</code> mode in order to act as hidden aggregation catalysts (hidden becuse they are explicitly excluded from the output).
+   * Optimization ends when the last buffer line subset has been processed (when the last line block enclosed by tracked element's parent opening/closing has been performed).
+   * @return <code>true</code> if the optimization changed something in the buffer.
+   * @throws SAXException in case of error.
+   */
+  public boolean optimizeV23() throws SAXException
+  {
+    // Removes the pointless virtual attributes values from the raw data buffer before the actual optimization phase begins to avoid edge effects (that is: extra pointless lines
+    // sent to the output corresponding to those pointless hidden virtual attributes).
+    if ((isEmpty() == false) && (level == XML2CSVOptimization.EXTENSIVE_V3)) cleanRawBuffer();
+    // Performs actual optimization.
     boolean atLeastOneStandardPackDone = false; // Set to true if enhanced standard optimization changed something in the buffer.
     boolean atLeastOneExtensivePackingDone = false; // Set to true if extensive optimization changed something in the buffer.
-    if ((isEmpty() == false) && (level == XML2CSVOptimization.EXTENSIVE_V2))
+    if ((isEmpty() == false) && ((level == XML2CSVOptimization.EXTENSIVE_V2) || (level == XML2CSVOptimization.EXTENSIVE_V3)))
     {
       if (XML2CSVLoggingFacade.DEBUG_MODE == true)
       {
@@ -424,25 +590,7 @@ class DataBuffer
         else
         {
           // OK: a tracked parent opening was met. We look for the related tracked parent closing index.
-          int sup = inf;
-          boolean foundSup = false;
-          while ((sup < buffer.size()) && (foundSup == false))
-          {
-            String[] supLine = buffer.get(sup);
-            if (supLine[trackedLeafElementXPaths.length + 1] == null) sup++;
-            else
-            {
-              if (trackedParentOpening.equals(supLine[trackedLeafElementXPaths.length + 1])) foundSup = true;
-              else
-                sup++;
-            }
-          }
-          if (foundSup == false) // The related tracked parent closing index was not found!
-          {
-            // This can't be unless a nasty bug occurred. Each tracked parent opening should have its counterpart tracked parent closing unless the buffer is not consistent,
-            // and if it happens it is not consistent then optimization is a nonsense. We raise an exception in order to avoid hazardous behavior.
-            throw new SAXException("Optimization bug. Bad recording of tracked element's parent in the data buffer.");
-          }
+          int sup = findParentClosing(inf, trackedParentOpening);
           // At this stage an optimization sub routine is triggered dealing with the buffer lines between the indices inf and sup.
           // All ZERO_TO_ONE/ONE_TO_ONE tracked elements which have trackedParentOpening as their parent are searched and if they are two or more
           // they can be packed on the same line (regular standard packing).
@@ -451,6 +599,44 @@ class DataBuffer
           {
             if ((trackedParentOpening.equals(trackedLeafElementParentXPaths[i]))
                 && ((trackedLeafElementCardinalities[i] == XML2CSVCardinality.ONE_TO_ONE) || (trackedLeafElementCardinalities[i] == XML2CSVCardinality.ZERO_TO_ONE)))
+            {
+              // The element associated with column i is concerned.
+              selectedColums.add(i);
+            }
+          }
+          // Subtle edge effect correction for leaf repeated elements with attributes in order to have attributes packed on the same line as the element.
+          // A single element will be packed on the same line as its attributes, if any, during an ancestor element's regular and/or enhanced pack loop (=> OK), but
+          // a repeated element cannot be packed during ancestor's regular and/or enhanced pack loop, and:
+          // - if the repeated element is an intermediate element (with or without attributes) it will have its own regular and/or enhanced pack loop later on
+          // which will pack the element's attributes, if any, with local descendant elements' contents => OK;
+          // - if the repeated element is a leaf element without attributes there won't be anything to pack with the element content => OK;
+          // - if the repeated element is a leaf element with attributes then the element content, being the parent of the attributes, will be excluded from
+          // the current trackedParentOpening-based pack loop which will pack all attributes on the same line. As a result the element content will appear
+          // on a line and its attributes on the next => KO.
+          // An easy way to solve this is to explicitly add the column corresponding to trackedParentOpening itself, if any, to the pack list in order to add
+          // trackedParentOpening's content, if any between inf and sup (which can't be unless trackedParentOpening be a leaf element), to the pack list.
+          // This is exactly what is done hereafter.
+          // The lines hereafter, which are extracted from a debug log before the corresponding buffer be changed by pack loops, provide a concrete example.
+          // Element root.row.comment is a leaf repeated element with 2 attributes (lang and idx) and because ByeBye has not root.row.comment for its parent
+          // (it is root.row.comment's content) it would normally be excluded from trackedParentOpening=root.row.comment's own regular and/or enhanced pack loop
+          // but is explicitly added hereafter.
+          // A=root.row.comment B=root.row.comment@lang C=root.row.comment@idx P1=trackedParentOpening P2={corresponding closing}
+          // -A-------B---C---P1----------------P2---------------
+          // [------][--][-]|[root.row.comment][----------------]
+          // [ByeBye][--][-]|[----------------][----------------]
+          // [------][en][-]|[----------------][----------------]
+          // [------][--][1]|[----------------][----------------]
+          // [------][--][-]|[----------------][root.row.comment]
+          // [------][--][-]|[root.row.comment][----------------]
+          // [------][--][-]|[root.row.comment][----------------]
+          // [Ha Det][--][-]|[----------------][----------------]
+          // [------][no][-]|[----------------][----------------]
+          // [------][--][2]|[----------------][----------------]
+          // [------][--][-]|[----------------][root.row.comment]
+          // [------][--][-]|[root.row.comment][----------------]
+          for (int i = 0; i < trackedLeafElementXPaths.length; i++)
+          {
+            if (trackedParentOpening.equals(trackedLeafElementXPaths[i]))
             {
               // The element associated with column i is concerned.
               selectedColums.add(i);
@@ -691,7 +877,7 @@ class DataBuffer
                       int oneSelectedColumnIndex = selectedColums.get(i);
                       // The field at index oneSelectedColumnIndex only is checked in order to decide if it is an empty line or not because
                       // all the other fields are either empty (default situation) or have been stuffed by other mono valued fields from a
-                      // previous optimization loop which are not relevant.
+                      // previous optimization loop which are not relevant. Virtual attributes are left aside.
                       if (buffer.get(y)[oneSelectedColumnIndex] != null) // Line y is a non empty line satisfying the extensive packing conditions.
                       {
                         for (int j = 0; j < trackedLeafElementXPaths.length; j++)
@@ -704,7 +890,7 @@ class DataBuffer
                               // OK: the destination field in line y is empty as expected.
                               // Time to copy the field content from line x to line y (line x will be emptied later on).
                               buffer.get(y)[j] = buffer.get(x)[j];
-                              atLeastOneStandardPackDone = true;
+                              atLeastOneExtensivePackingDone = true;
                               extensivePackingChangedBuffer = true;
                             }
                             else if ((buffer.get(y)[j].equals(buffer.get(x)[j])))
@@ -716,7 +902,7 @@ class DataBuffer
                               // This shallow copy is not seen as an actual error just a borderline effect of optimization flip-flops.
                               // Of course there is a slight possibility that it be an actual bug just like the next case but the probability
                               // remains very low.
-                              atLeastOneStandardPackDone = true;
+                              atLeastOneExtensivePackingDone = true;
                               extensivePackingChangedBuffer = true;
                             }
                             else
@@ -798,8 +984,8 @@ class DataBuffer
    * {@link utils.xml.xml2csv.constants.XML2CSVOptimization#STANDARD STANDARD} one plus back copy of the packed line X into each multi-occurrence element line of LS provided that
    * its parent block be either P or a sub block of P, plus mono-occurrence element line of LS whose parent is a sub block of P.<br>
    * Optimization ends when the last buffer line subset has been processed (when the last line block enclosed by tracked element's parent opening/closing has been performed).
-   * @return true if the optimization changed something in the buffer.
-   * @throws <code>SAXException</code> in case of error.
+   * @return <code>true</code> if the optimization changed something in the buffer.
+   * @throws SAXException in case of error.
    */
   public boolean optimizeV1() throws SAXException
   {
@@ -1006,7 +1192,7 @@ class DataBuffer
                               // OK: the destination field in line y is empty as expected.
                               // Time to copy the field content from line x to line y (line x will be emptied later on).
                               buffer.get(y)[j] = buffer.get(x)[j];
-                              atLeastOneStandardPackDone = true;
+                              atLeastOneExtensivePackingDone = true;
                               extensivePackingChangedBuffer = true;
                             }
                             else if ((buffer.get(y)[j].equals(buffer.get(x)[j])) && (loopCount > 1))
@@ -1018,7 +1204,7 @@ class DataBuffer
                               // This shallow copy is not seen as an actual error just a borderline effect of optimization flip-flops.
                               // Of course there is always a slight possibility of an actual bug just like the next case but with a carefully
                               // tested program odds remain in our favor.
-                              atLeastOneStandardPackDone = true;
+                              atLeastOneExtensivePackingDone = true;
                               extensivePackingChangedBuffer = true;
                             }
                             else

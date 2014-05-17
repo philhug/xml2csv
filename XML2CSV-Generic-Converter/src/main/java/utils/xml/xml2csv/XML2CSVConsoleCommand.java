@@ -66,6 +66,9 @@ public class XML2CSVConsoleCommand
   /** Name space warding indicator. */
   private static boolean WARDING_MODE = false;
 
+  /** Unleashed optimization indicator. */
+  private static boolean UNLEASHING_MODE = false;
+
   /** Attributes extraction indicator. */
   private static boolean withAttributes = false;
 
@@ -139,7 +142,7 @@ public class XML2CSVConsoleCommand
   {
     System.out.println(XML2CSVMisc.DISPLAY_CLASS_NAME);
     System.out
-        .println("Usage: java utils.xml.xml2csv.XML2CSVConsoleCommand [-h] [-m] [-v] [-d[{degree}]] [-a] [-r] [-x[{variant}]] -i {input dir/file} [-t {template filename}] [-o {output dir}] [-b[{blend filename}]] [-e {output encoding}] [-s {output separator}]  [-p {+ filter file}] [-n {- filter file}] [-l[{log4J config}]] [-c{limit}] [-w]");
+        .println("Usage: java utils.xml.xml2csv.XML2CSVConsoleCommand [-h] [-m] [-v] [-d[{degree}]] [-a] [-r] [-x[{variant}]] -i {input dir/file} [-t {template filename}] [-o {output dir}] [-b[{blend filename}]] [-e {output encoding}] [-s {output separator}]  [-p {+ filter file}] [-n {- filter file}] [-l[{log4J config}]] [-c{limit}] [-w] [-u]");
     System.out.println("with:");
     System.out.println("-h or --help: displays this help text, then aborts the program.");
     System.out.println("-m or --mute: mutes the program. In this mode nothing is displayed at runtime. Useful for batch integration where the return code alone matters.");
@@ -149,8 +152,8 @@ public class XML2CSVConsoleCommand
     System.out.println("-a or --attribute: extracts attributes as well.");
     System.out.println("-r or --raw: raw execution. Inactivates runtime optimization (a default routine which packs data before it is sent to a CSV output file).");
     System.out.println("-x or -x{variant} --extensive{variant}: extensive optimization. Activates enhanced packing behavior. An explicit optimization variant can be provided ("
-        + XML2CSVOptimization.EXTENSIVE_V1.getCode() + " or " + XML2CSVOptimization.EXTENSIVE_V2.getCode() + ") instead of the default <"
-        + XML2CSVOptimization.EXTENSIVE_V2.getCode() + ">.");
+        + XML2CSVOptimization.EXTENSIVE_V1.getCode() + " or " + XML2CSVOptimization.EXTENSIVE_V2.getCode() + " or " + XML2CSVOptimization.EXTENSIVE_V3.getCode()
+        + ") instead of the default <" + XML2CSVOptimization.EXTENSIVE_V3.getCode() + ">.");
     System.out
         .println("-i {input dir/file} or --input {input dir/file}: relative/absolute path to either a directory containing the XML input files to process, or path to one single XML file to process.");
     System.out
@@ -178,8 +181,9 @@ public class XML2CSVConsoleCommand
     System.out.println("-c or -c{limit} or --cutoff{limit}: output file cutoff limit. If a valid number is provided alongside it will be used instead of the default built-in <"
         + XML2CSVMisc.DEFAULT_CUTOFF_LIMIT + "> value to fix a row count threshold for all CSV output files (that is: {limit}x1024 lines).");
     System.out.println("-w or --ward: performs name space aware parsing. When omitted, XML name spaces are plainly ignored by the program.");
+    System.out.println("-u or --unleash: disables root-safe optimization mechanism, which excludes the root element from the optimization process for performance issues.");
     System.out
-        .println("Parameter -h overrides any other parameter. Parameter -m overrides -v and -d. Parameter -i is mandatory. Parameters -x and -r are exclusive. Parameters -p and -n are exclusive. Parameter -t is ignored when parameter -i points to one single file.");
+        .println("Parameter -h overrides any other parameter. Parameter -m overrides -v and -d. Parameter -i is mandatory. Parameters -x and -r are exclusive. Parameters -u and -r are exclusive. Parameters -p and -n are exclusive. Parameter -t is ignored when parameter -i points to one single file.");
     System.out
         .println("Return codes are: 0 - OK; 1 - Execution cancelled - help displayed or no XML file to process; 2 - Execution aborted - bad parameters; 3 - Execution aborted - filter file issue; 4 - Execution aborted - XML structure analysis failure; 5 - Execution aborted - XML data extraction failure; 6 - Execution aborted - Unexpected problem.");
   }
@@ -194,7 +198,7 @@ public class XML2CSVConsoleCommand
     {
       // We read & check the input parameters.
       boolean commandlineError = false;
-      LongOpt[] longopts = new LongOpt[18];
+      LongOpt[] longopts = new LongOpt[19];
       longopts[0] = new LongOpt("help", LongOpt.NO_ARGUMENT, null, 'h');
       longopts[1] = new LongOpt("mute", LongOpt.NO_ARGUMENT, null, 'm');
       longopts[2] = new LongOpt("verbose", LongOpt.NO_ARGUMENT, null, 'v');
@@ -213,9 +217,10 @@ public class XML2CSVConsoleCommand
       longopts[15] = new LongOpt("log", LongOpt.OPTIONAL_ARGUMENT, null, 'l');
       longopts[16] = new LongOpt("cutoff", LongOpt.OPTIONAL_ARGUMENT, null, 'c');
       longopts[17] = new LongOpt("ward", LongOpt.NO_ARGUMENT, null, 'w');
+      longopts[18] = new LongOpt("unleash", LongOpt.NO_ARGUMENT, null, 'u');
 
       // An option with optional argument is followed by ::, an option with mandatory argument is followed by : and an option without argument is followed by nothing.
-      Getopt g = new Getopt(XML2CSVMisc.DISPLAY_CLASS_NAME, args, "hmvd::arx::i:t:o:b::e:s:p:n:l::c::w", longopts, true);
+      Getopt g = new Getopt(XML2CSVMisc.DISPLAY_CLASS_NAME, args, "hmvd::arx::i:t:o:b::e:s:p:n:l::c::wu", longopts, true);
       int option = 0;
 
       while ((option = g.getopt()) != -1)
@@ -251,7 +256,7 @@ public class XML2CSVConsoleCommand
           case 'x':
             EXTENSIVE_MODE = true;
             String variant = g.getOptarg();
-            if (variant == null) level = XML2CSVOptimization.EXTENSIVE_V2;
+            if (variant == null) level = XML2CSVOptimization.EXTENSIVE_V3;
             else
               level = XML2CSVOptimization.parse(variant);
             if (level == null) extensiveVariantFailure = true;
@@ -294,6 +299,9 @@ public class XML2CSVConsoleCommand
           case 'w':
             WARDING_MODE = true;
             break;
+          case 'u':
+            UNLEASHING_MODE = true;
+            break;
           case '?':
             commandlineError = true;
             break;
@@ -318,6 +326,7 @@ public class XML2CSVConsoleCommand
       if (log4JConfigFile != null) XML2CSVLoggingFacade.log(XML2CSVLogLevel.INFO, "using Log4J with custom configuration file <" + log4JConfigFile + ">.");
       if (cutoff != -1) XML2CSVLoggingFacade.log(XML2CSVLogLevel.INFO, "cutoff limit activated. No CSV output file will hold more than <" + cutoff + "> lines.");
       if (WARDING_MODE == true) XML2CSVLoggingFacade.log(XML2CSVLogLevel.INFO, "warding mode activated. Name space aware parsing will be performed.");
+      if (UNLEASHING_MODE == true) XML2CSVLoggingFacade.log(XML2CSVLogLevel.INFO, "unleashed mode activated. Root-inclusive optimization will be performed.");
 
       if (log4jFailure == true)
       {
@@ -350,6 +359,11 @@ public class XML2CSVConsoleCommand
       if ((RAW_MODE == true) && (EXTENSIVE_MODE == true))
       {
         XML2CSVLoggingFacade.log(XML2CSVLogLevel.WARNING, "parameters -r and -x are exclusive.");
+        commandlineError = true;
+      }
+      if ((RAW_MODE == true) && (UNLEASHING_MODE == true))
+      {
+        XML2CSVLoggingFacade.log(XML2CSVLogLevel.WARNING, "parameters -r and -u are exclusive.");
         commandlineError = true;
       }
       if ((positiveFilterFile != null) && (negativeFilterFile != null))
@@ -556,6 +570,7 @@ public class XML2CSVConsoleCommand
     {
       XML2CSVGenericGenerator generator = new XML2CSVGenericGenerator(singleOutputFile, outputDir, fieldSeparator, encoding, level, cutoff);
       generator.setWarding(WARDING_MODE);
+      generator.setUnleashing(UNLEASHING_MODE);
       generator.generate(xmlInputFiles, xmlTemplateFileName, expectedElementXpathList, discardedElementXpathList, withAttributes);
     }
     catch (XML2CSVException e)

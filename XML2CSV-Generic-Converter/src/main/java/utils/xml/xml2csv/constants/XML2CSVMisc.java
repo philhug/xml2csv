@@ -71,4 +71,10 @@ public abstract class XML2CSVMisc
 
   /** The displayed alias name of the default name space. */
   public static final String DEFAULT_NAMESPACE_ALIAS = "{default}";
+
+  /** The name & content of the virtual attribute used for {@link utils.xml.xml2csv.constants.XML2CSVOptimization#EXTENSIVE_V3 EXTENSIVE_V3} optimization. */
+  public static final String VIRTUAL_ATTRIBUTE = "###";
+
+  /** The default element repetition threshold used to devise virtual attribute holders in the most extensive optimization mode. */
+  public static final long ELEMENT_REPETITION_THRESHOLD = 10;
 }

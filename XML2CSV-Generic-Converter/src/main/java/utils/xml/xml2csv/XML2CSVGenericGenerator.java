@@ -83,6 +83,9 @@ public class XML2CSVGenericGenerator
   /** Name space awareness indicator. */
   private boolean withNamespaces = false;
 
+  /** Unleashed optimization indicator. */
+  private boolean unleashed = false;
+
   /**
    * <code>XML2CSVGenericGenerator</code> constructor.<br>
    * Data extracted from XML input files will be sent to the given <code>OutputStream</code>.<br>
@@ -275,7 +278,7 @@ public class XML2CSVGenericGenerator
       XML2CSVLoggingFacade.log(XML2CSVLogLevel.VERBOSE, "computing XML structure...");
       XML2CSVLoggingFacade.log(null, null, XML2CSVMisc.LINE);
     }
-    StructureHandler structureHandler = new StructureHandler(withAttributes, withNamespaces); // XML structure analysis handler initialization.
+    StructureHandler structureHandler = new StructureHandler(level, withAttributes, withNamespaces); // XML structure analysis handler initialization.
     try
     {
       XML2CSVLoggingFacade.log(XML2CSVLogLevel.VERBOSE, "using XML input file <" + fileToUseForStructureAnalysis.getName() + "> for template.");
@@ -397,7 +400,7 @@ public class XML2CSVGenericGenerator
 
       // The XML data handler is initialized. It will be reset/reused for each XML input file.
       DataHandler dataHandler = new DataHandler(outputWriterFacade, csvFieldSeparator, encoding, leafElementsDescription, xmlExpectedElementsXPaths, xmlDiscardedElementsXPaths,
-          level, BLEND_MODE, withAttributes, withNamespaces);
+          level, BLEND_MODE, withAttributes, withNamespaces, unleashed);
 
       // Each of the XML input files are processed in turn.
       if (XML2CSVLoggingFacade.VERBOSE_MODE == true)
@@ -868,5 +871,14 @@ public class XML2CSVGenericGenerator
   public void setWarding(boolean warding)
   {
     this.withNamespaces = warding;
+  }
+
+  /**
+   * Activates or deactivates root-inclusive optimization.
+   * @param unleashing <code>true</code> to perform unleashed optimization which will be root tag inclusive, and <code>false</code> otherwise.
+   */
+  public void setUnleashing(boolean unleashing)
+  {
+    this.unleashed = unleashing;
   }
 }

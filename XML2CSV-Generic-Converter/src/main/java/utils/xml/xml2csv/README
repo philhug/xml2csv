@@ -2,30 +2,32 @@ This is a Java program which converts one or more similar XML files into CSV mat
 I made it in order to extract data from big XML files and gather them in files more
 easily opened with a spreadsheet.
 
-The four optimization flavors the program offers are: 'raw', 'standard', plus 
-'extensive variant 1' and 'extensive variant 2'.
+The five optimization flavors the program offers are: 'raw', 'standard', plus 
+'extensive variant 1', 'extensive variant 2' and 'extensive variant 3'.
 Raw XML -> CSV transformation consists in 'flattening' an explicit data hierarchy
 into as many lines as there are XML leaf elements and to rely on relative row/column
 positioning to feature the hierarchy (--> 'raw' optimization).
-Data grouping might be performed alongside parsing in order to merge closely related 
+Data grouping might be performed alongside parsing in order to merge closely related
 single elements on the same line (--> 'standard' optimization), which, in turn, might be
 merged back with all related repeated elements (--> 'extensive variant 1' optimization).
-The last 'extensive variant 2' optimization flavor, which uses a slightly different
-approach with its own advanced grouping/merge strategy, might produce better results 
-with XML files bearing many mono-occurrence elements.
+The 'extensive variant 2' optimization flavor, which uses a slightly different approach
+with its own advanced grouping/merge strategy, might produce better results with XML
+files bearing many mono-occurrence elements.
+The last 'extensive variant 3' optimization flavor maximizes 'extensive variant 2's
+grouping/merge capabilities (by introducing virtual mono-occurrence elements).
 
 The program performs 'standard' optimization with the default settings, which is quite
 the best compromise in my opinion because:
 - each XML element content appears once only in the output file(s);
 - data grouping reduces the number of lines in the output file(s).
 Moreover, the general CSV data layout is very close to its XML counterpart.
-Put together 'standard' optimization creates fairly small CSV files and, as such, was 
+Put together 'standard' optimization creates fairly small CSV files and, as such, was
 the one I chose for the default settings.
 
-This said, 'raw' and 'extensive' optimizations (variant 1 or 2) are not gadgets because:
-- 'extensive' optimization is the closest thing to what spreadsheets do when they upload 
+This said, 'raw' and 'extensive' optimizations (variant 1, 2 or 3) are not gadgets because:
+- 'extensive' optimization is the closest thing to what spreadsheets do when they upload
   native XML.
-- 'raw' optimization is the only way to cope with XML bearing heavily repeated leaf 
+- 'raw' optimization is the only way to cope with XML bearing heavily repeated leaf
   elements (for instance: a <paininthe>NECK</paininthe> element repeated 123000 times
   in sequence). While I personally consider it bad XML practice such thing might happen
   and I felt obliged to propose something to deal with it.
@@ -37,19 +39,19 @@ just like I did with you a few lines above.
 Aaron Renn's GetOpt helped to create a convenient console command version in a convenient
 Unix fashion. It's not the 1st time. Well, thanks again, Aaron.
 
-Special care was paid to memory usage to ensure that the program would behave well and
-fast even against very big XML files.
+Special care was paid to memory usage to ensure that the program would behave well and fast
+even against very big XML files, provided that the data dependency level remain under control
+(please refer to the documentation for further information).
 DOM-like access to XML files was banished from the outset in favor of more basic but far
 more memory-friendly SAX parsing.
 The tricky part was to find a way to balance both the need to keep enough data in memory
 to display them properly according to the selected optimization mode, and the urge to
 empty data buffer as soon as possible to avoid memory havoc.
-This ended up into devising some kind of versatile buffering routine which stuffs just 
-enough data in memory to perform consistent data grouping, and then flushes it fast sprint 
-to the output (something you might see for yourself on the console if you run the program 
+This ended up into devising some kind of versatile buffering routine which stuffs just
+enough data in memory to perform consistent data grouping, and then flushes it fast sprint
+to the output (something you might see for yourself on the console if you run the program
 in debug mode).
 
 Regards,
 Laurent
 lochrann@rocketmail.com
-

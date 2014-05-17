@@ -20,7 +20,8 @@ package utils.xml.xml2csv.constants;
  * <li><code>NONE</code> for no optimization at all;
  * <li><code>STANDARD</code> for standard optimization;
  * <li><code>EXTENSIVE_V1</code> for extensive optimization using variant 1;
- * <li><code>EXTENSIVE_V2</code> for extensive optimization using variant 2.
+ * <li><code>EXTENSIVE_V2</code> for extensive optimization using variant 2;
+ * <li><code>EXTENSIVE_V3</code> for extensive optimization using variant 3.
  * </ul>
  * @author L. Popieul (lochrann@rocketmail.com)
  * @version 1.0.0
@@ -37,7 +38,10 @@ public enum XML2CSVOptimization
   EXTENSIVE_V1("XV1", "Extensive optimization mode variant 1"),
 
   /** Extensive optimization, variant 2. */
-  EXTENSIVE_V2("XV2", "Extensive optimization mode variant 2");
+  EXTENSIVE_V2("XV2", "Extensive optimization mode variant 2"),
+
+  /** Extensive optimization, variant 3. */
+  EXTENSIVE_V3("XV3", "Extensive optimization mode variant 3");
 
   /** Attribute recording the code of the current enumeration occurrence. */
   private final String code;
