@@ -124,6 +124,9 @@ class DataHandler extends DefaultHandler implements LexicalHandler
   /** Name space awareness indicator. */
   private boolean withNamespaces = false;
 
+  /** Unleashed optimization indicator. */
+  private boolean unleashed = false;
+
   /** Attributes recorded in a hash map where the key is The.Element.Path and the value an ordered list of String arrays providing each: attribute name (index 0), value (index 1). */
   private HashMap<String, ArrayList<String[]>> attributes = new HashMap<String, ArrayList<String[]>>();
 
@@ -140,9 +143,10 @@ class DataHandler extends DefaultHandler implements LexicalHandler
    * @param singleHeader <code>true</code> to have the column names displayed for the first file only, or <code>false</code> to have the column names atop each output file.
    * @param withAttributes <code>true</code> if element attributes should be extracted as well or <code>false</code> otherwise.
    * @param withNamespaces <code>true</code> if name space aware parsing should be performed or <code>false</code> otherwise.
+   * @param unleashed <code>true</code> to deactivate the built-in root-safe optimization mechanism or <code>false</code> otherwise.
    */
   public DataHandler(OutputWriterFacade outputWriterFacade, String fieldSeparator, Charset encoding, ElementsDescription leafElementsDescription, String[] expectedElementsXpaths,
-      String[] discardedElementsXpaths, XML2CSVOptimization level, boolean singleHeader, boolean withAttributes, boolean withNamespaces)
+      String[] discardedElementsXpaths, XML2CSVOptimization level, boolean singleHeader, boolean withAttributes, boolean withNamespaces, boolean unleashed)
   {
     super();
 
@@ -167,6 +171,8 @@ class DataHandler extends DefaultHandler implements LexicalHandler
     this.withAttributes = withAttributes;
 
     this.withNamespaces = withNamespaces;
+
+    this.unleashed = unleashed;
 
     // Convention1: a null expectedElementsXpaths object means that there is no expected element list, or in other words, that all XML leaf elements are expected to
     // be sent to the CSV output file.
@@ -249,7 +255,7 @@ class DataHandler extends DefaultHandler implements LexicalHandler
           sb.append(i);
           sb.append(">=[");
           sb.append(trackedLeafElementsDescription.getElementsParentXPaths()[i]);
-          sb.append("#");
+          sb.append(".");
           sb.append(trackedLeafElementsDescription.getElementsShortNames()[i]);
           sb.append("|");
           sb.append(trackedLeafElementsDescription.getElementsCardinalities()[i]);
@@ -269,17 +275,18 @@ class DataHandler extends DefaultHandler implements LexicalHandler
         while (iterator.hasNext())
         {
           String oneXpath = iterator.next();
-          String[] props = dictionary.get(oneXpath); // Index 0 = cardinality, index 1 = type, index 2 = nature.
+          String[] props = dictionary.get(oneXpath); // Index 0 = cardinality, index 1 = type, index 2 = occurrence global count in template file, index 3 = nature.
           StringBuffer sb = new StringBuffer();
           sb.append("\t");
           sb.append("column <");
           sb.append(oneXpath);
           sb.append(">=[");
-          sb.append(props[0]);
-          sb.append("|");
-          sb.append(props[1]);
-          sb.append("|");
-          sb.append(props[2]);
+          for (int i = 0; i < props.length - 1; i++)
+          {
+            sb.append(props[i]);
+            sb.append("|");
+          }
+          sb.append(props[props.length - 1]);
           sb.append("]");
           XML2CSVLoggingFacade.log(XML2CSVLogLevel.DEBUG3, sb.toString());
         }
@@ -315,10 +322,14 @@ class DataHandler extends DefaultHandler implements LexicalHandler
       // Space full parsing: we use the current element name with its name space alias/prefix, that is, qName and not localName.
       eName = qName;
     }
+    // Dots (.) in tag names are replaced by stars (*) because the dot is used by this handler as tag separator in XPaths.
+    eName = EscapeUtils.escapeXML10TagName(eName);
     // Character @, which should not appear in correct XML tag names, is used by this handler later on to differentiate attributes from elements.
     if (localName.contains("@")) throw new SAXException("Bad XML holding tags containing '@' characters, which are forbidden.");
     // Character :, which should not appear in correct XML tag names, is used by this handler for name space aware parsing to separate the element's short name from its prefix.
     if (localName.contains(":")) throw new SAXException("Bad XML holding tags containing ':' characters, which are forbidden.");
+    // Character #, which should not appear in correct XML tag names, is used by this handler for virtual attributes (name+content) implied in the most extensive optimization mode.
+    if (localName.contains("#")) throw new SAXException("Bad XML holding tags containing '#' characters, which are forbidden.");
     currentXMLTagSequence.add(eName);
 
     // Root element detection
@@ -334,7 +345,13 @@ class DataHandler extends DefaultHandler implements LexicalHandler
     // Sends the information to the data buffer too for optimization purpose. Does nothing in raw mode i.e. when optimization is deactivated.
     if (level != XML2CSVOptimization.NONE)
     {
-      if ((isParentOfTrackedElement() == true) && (isRootElement() == false))
+      boolean record = false;
+      if (isParentOfTrackedElement() == true)
+      {
+        if (unleashed == true) record = true;
+        if ((unleashed == false) && (isRootElement() == false)) record = true;
+      }
+      if (record == true)
       {
         trackedElementParentCount++;
         dataBuffer.recordTrackedParentOpening(getXPathAsString(currentXMLTagSequence));
@@ -357,7 +374,7 @@ class DataHandler extends DefaultHandler implements LexicalHandler
       if (props != null)
       {
         // OK, the element is defined in the dictionary: regular option -1- or -2- depending on whether it is a leaf element or not.
-        isLeaf = XML2CSVNature.isLeaf(props[2]);
+        isLeaf = XML2CSVNature.isLeaf(props[props.length - 1]); // The nature is the last of the element properties.
       }
       else
       {
@@ -368,6 +385,35 @@ class DataHandler extends DefaultHandler implements LexicalHandler
       else
       {
         // Option -1-: the attributes are already stacked and will be handled when the element is closed.
+      }
+    }
+    else
+    {
+      // The element has no real attribute value.
+      // In the most extensive optimization mode only, an extra virtual hidden attribute value is generated for each sub-root intermediate element (generation for leaf
+      // elements is useless) which was granted a virtual attribute definition and which has no real attribute value.
+      // This data handler will generate a virtual hidden attribute value no matter if the element has an actual content (good) or not (less good, for it causes bad edge
+      // packing effects [extra pointless lines sent to the output]): indeed, the handler doesn't accumulate knowledge about elements alongside parsing and cannot sort
+      // things out at this level.
+      // Annoying virtual hidden attribute values generated here for intermediate elements without content have to be explicitly removed from within the data buffer
+      // later on just before the optimization phase begins (knowledge about element contents can be devised at that time and the annoying virtual data removed before
+      // they cause trouble).
+      if (level == XML2CSVOptimization.EXTENSIVE_V3)
+      {
+        String[] props = trackedLeafElementsDescription.getDictionary().get(getXPathAsString(currentXMLTagSequence));
+        boolean isLeaf = false;
+        if (props != null)
+        {
+          // OK, the element is defined in the dictionary: we can devise if it's a intermediate element or not.
+          isLeaf = XML2CSVNature.isLeaf(props[props.length - 1]); // The nature is the last of the element properties.
+        }
+        else
+        {
+          // The element does not exist in the dictionary: it wasn't met in the template file during structure analysis phase.
+          // We don't generate a virtual attribute, just like if it was a leaf element.
+          isLeaf = true;
+        }
+        if (isLeaf == false) generateVirtualAttribute();
       }
     }
   }
@@ -415,7 +461,7 @@ class DataHandler extends DefaultHandler implements LexicalHandler
       if (props != null)
       {
         // OK, the element is defined in the dictionary and its nature (leaf or intermediary element) is defined.
-        isLeaf = XML2CSVNature.isLeaf(props[2]);
+        isLeaf = XML2CSVNature.isLeaf(props[props.length - 1]); // The nature is the last of the element properties.
       }
       else
       {
@@ -437,7 +483,13 @@ class DataHandler extends DefaultHandler implements LexicalHandler
     // Sends the information to the data buffer too for optimization purpose. Does nothing in raw mode i.e. when optimization is deactivated.
     if (level != XML2CSVOptimization.NONE)
     {
-      if ((isParentOfTrackedElement() == true) && (isRootElement() == false))
+      boolean record = false;
+      if (isParentOfTrackedElement() == true)
+      {
+        if (unleashed == true) record = true;
+        if ((unleashed == false) && (isRootElement() == false)) record = true;
+      }
+      if (record == true)
       {
         trackedElementParentCount--;
         dataBuffer.recordTrackedParentClosing(getXPathAsString(currentXMLTagSequence));
@@ -454,7 +506,7 @@ class DataHandler extends DefaultHandler implements LexicalHandler
     {
       if (trackedElementParentCount == 0)
       {
-        if (level == XML2CSVOptimization.EXTENSIVE_V2) dataBuffer.optimizeV2();
+        if ((level == XML2CSVOptimization.EXTENSIVE_V2) || (level == XML2CSVOptimization.EXTENSIVE_V3)) dataBuffer.optimizeV23();
         else
           dataBuffer.optimizeV1(); // STANDARD and EXTENSIVE_V1
         dataBuffer.flush();
@@ -600,7 +652,7 @@ class DataHandler extends DefaultHandler implements LexicalHandler
   /**
    * Sends a string to the CSV output file.
    * @param s the string to send.
-   * @throws <code>SAXException</code> in case of error.
+   * @throws SAXException in case of error.
    */
   private void emit(String s) throws SAXException
   {
@@ -617,7 +669,7 @@ class DataHandler extends DefaultHandler implements LexicalHandler
 
   /**
    * Sends a line separator to the CSV output file (CR-LF, CR or LF depending on the underneath OS).
-   * @throws <code>SAXException</code> in case of error.
+   * @throws SAXException in case of error.
    */
   private void ls() throws SAXException
   {
@@ -634,7 +686,7 @@ class DataHandler extends DefaultHandler implements LexicalHandler
   /**
    * Retrieves the current text from the current element text buffer, which is reset alongside.
    * @param trim <code>true</code> to have the text trimmed as well.
-   * @throws <code>SAXException</code> in case of error.
+   * @throws SAXException in case of error.
    */
   private String getText(boolean trim) throws SAXException
   {
@@ -812,10 +864,13 @@ class DataHandler extends DefaultHandler implements LexicalHandler
     StringBuffer result = new StringBuffer();
     for (int i = 0; i < headers.length - 1; i++)
     {
-      result.append(headers[i]);
-      result.append(fieldSeparator);
+      if (headers[i].endsWith("@" + XML2CSVMisc.VIRTUAL_ATTRIBUTE) == false)
+      {
+        result.append(headers[i]);
+        result.append(fieldSeparator);
+      }
     }
-    result.append(headers[headers.length - 1]);
+    if (headers[headers.length - 1].endsWith("@" + XML2CSVMisc.VIRTUAL_ATTRIBUTE) == false) result.append(headers[headers.length - 1]);
     return result.toString();
   }
 
@@ -881,6 +936,25 @@ class DataHandler extends DefaultHandler implements LexicalHandler
   }
 
   /**
+   * Generates a virtual attribute value for the current element if it happens that it was provided a virtual attribute definition.
+   */
+  private void generateVirtualAttribute()
+  {
+    int indexAtt = getLeafElementCSVColumnIndex(getXPathAsString(currentXMLTagSequence) + "@" + XML2CSVMisc.VIRTUAL_ATTRIBUTE);
+    if (indexAtt != -1)
+    {
+      // The current element has a virtual attribute and a virtual attribute value is generated.
+      // The virtual attribute value is not important because the virtual attribute is never displayed, but it cannot be left blank.
+      // We use the virtual attribute name as virtual attribute value.
+      dataBuffer.addContent(indexAtt, XML2CSVMisc.VIRTUAL_ATTRIBUTE);
+    }
+    else
+    {
+      // The current element doesn't have a virtual attribute definition. We do nothing.
+    }
+  }
+
+  /**
    * Handles attributes for the current element.
    * @throws SAXException in case of error.
    */
@@ -932,5 +1006,8 @@ class DataHandler extends DefaultHandler implements LexicalHandler
     rootTag = null;
     textBuffer = null;
     dataBuffer.reset();
+    withAttributes = false;
+    withNamespaces = false;
+    unleashed = false;
   }
 }

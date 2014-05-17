@@ -16,6 +16,7 @@ import utils.xml.xml2csv.constants.XML2CSVMisc;
  * Utility class which prepares strings by escaping the necessary characters for proper XML/CSV handling:<br>
  * <ul>
  * <li>XML: escape of XML 1.0 "<i>character entities</i>" in strings;
+ * <li>XML: escape of dots (.) in XML tag names by replacing them by stars (*);
  * <li>CSV: escape by means of surrounding double quotes.
  * </ul>
  */
@@ -104,6 +105,31 @@ class EscapeUtils
           if (leaveTab == true) buf.append(c);
           else
             buf.append(' ');
+          break;
+        default:
+          buf.append(c);
+          break;
+      }
+    }
+    return buf.toString();
+  }
+
+  /**
+   * Replaces in a input XML tag name every occurrence of a dot '.' by the character "*".
+   * @param input the XML tag name to escape.
+   * @return the escaped XML tag name.
+   */
+  public static String escapeXML10TagName(String input)
+  {
+    StringBuffer buf = new StringBuffer();
+    for (int i = 0; i < input.length(); i++)
+    {
+      char c = input.charAt(i);
+
+      switch (c)
+      {
+        case '.':
+          buf.append("*");
           break;
         default:
           buf.append(c);

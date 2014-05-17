@@ -33,6 +33,7 @@ package utils.xml.xml2csv;
 import utils.xml.xml2csv.constants.XML2CSVCardinality;
 import utils.xml.xml2csv.constants.XML2CSVLogLevel;
 import utils.xml.xml2csv.constants.XML2CSVNature;
+import utils.xml.xml2csv.constants.XML2CSVOptimization;
 import utils.xml.xml2csv.constants.XML2CSVType;
 import utils.xml.xml2csv.constants.XML2CSVMisc;
 
@@ -77,7 +78,7 @@ class StructureHandler extends DefaultHandler implements LexicalHandler
 
   /**
    * Properties of each element (cardinality, type) recorded in a hash map where the key is The.Element.Path and the value a String array. Recorded properties: cardinality
-   * (index 0), type (index 1).
+   * (index 0), type (index 1), global occurrence count (index 2).
    */
   private HashMap<String, String[]> properties = new HashMap<String, String[]>();
 
@@ -129,6 +130,9 @@ class StructureHandler extends DefaultHandler implements LexicalHandler
   /** Parser adapted for XML decimals. */
   private DecimalFormat decimalParser = new DecimalFormat("##########.#######");
 
+  /** The chosen optimization level. */
+  private XML2CSVOptimization level = null;
+
   /** Attributes extraction indicator. */
   private boolean withAttributes = false;
 
@@ -137,12 +141,14 @@ class StructureHandler extends DefaultHandler implements LexicalHandler
 
   /**
    * <code>StructureHandler</code> constructor.
+   * @param level the chosen <code>XML2CSVOptimization</code> level.
    * @param withAttributes <code>true</code> if element attributes should be extracted as well or <code>false</code> otherwise.
    * @param withNamespaces <code>true</code> if name space aware parsing should be performed or <code>false</code> otherwise.
    */
-  public StructureHandler(boolean withAttributes, boolean withNamespaces)
+  public StructureHandler(XML2CSVOptimization level, boolean withAttributes, boolean withNamespaces)
   {
     super();
+    this.level = level;
     this.withAttributes = withAttributes;
     this.withNamespaces = withNamespaces;
   }
@@ -165,8 +171,30 @@ class StructureHandler extends DefaultHandler implements LexicalHandler
   {
     try
     {
-      // XML structure finalization.
-      // The flat XML leaf element list is generated from the actual tree representation.
+      // In the most extensive optimization mode only, virtual hidden attribute definitions are added to certain elements.
+      // They serve as aggregation catalysts which maximize optimization without major algorithm change.
+      if (level == XML2CSVOptimization.EXTENSIVE_V3)
+      {
+        ArrayList<String> catalysElementXpaths = new ArrayList<String>();
+        deviseCatalystElementXPaths(XML2CSVMisc.EMPTY_STRING, graph, catalysElementXpaths);
+        if (XML2CSVLoggingFacade.VERBOSE_MODE == true)
+        {
+          if (catalysElementXpaths.size() > 0)
+          {
+            StringBuffer sb = new StringBuffer();
+            sb.append("the following elements will be provided hidden virtual attributes for optimization maximization:" + XML2CSVMisc.LINE_SEPARATOR);
+            for (int i = 0; i < catalysElementXpaths.size() - 1; i++)
+              sb.append("\t- <" + catalysElementXpaths.get(i) + ">" + XML2CSVMisc.LINE_SEPARATOR);
+            sb.append("\t- <" + catalysElementXpaths.get(catalysElementXpaths.size() - 1) + ">");
+            XML2CSVLoggingFacade.log(XML2CSVLogLevel.VERBOSE, sb.toString());
+          }
+          else
+            XML2CSVLoggingFacade.log(XML2CSVLogLevel.VERBOSE, "no candidate elements detected for optimization maximization. No hidden virtual attributes created.");
+        }
+        for (int i = 0; i < catalysElementXpaths.size(); i++)
+          generateCatalystAttribute(catalysElementXpaths.get(i));
+      }
+      // XML structure finalization. The flat XML leaf element list is generated from the actual tree representation.
       flattenGraph(XML2CSVMisc.EMPTY_STRING, graph);
     }
     catch (Exception e)
@@ -190,10 +218,14 @@ class StructureHandler extends DefaultHandler implements LexicalHandler
       // Space full parsing: we use the current element name with its name space alias/prefix, that is, qName and not localName.
       eName = qName;
     }
+    // Dots (.) in tag names are replaced by stars (*) because the dot is used by this handler as tag separator in XPaths.
+    eName = EscapeUtils.escapeXML10TagName(eName);
     // Character @, which should not appear in correct XML tag names, is used by this handler later on to differentiate attributes from elements.
     if (localName.contains("@")) throw new SAXException("Bad XML holding tags containing '@' characters, which are forbidden.");
     // Character :, which should not appear in correct XML tag names, is used by this handler for name space aware parsing to separate the element's short name from its prefix.
     if (localName.contains(":")) throw new SAXException("Bad XML holding tags containing ':' characters, which are forbidden.");
+    // Character #, which should not appear in correct XML tag names, is used by this handler for virtual attributes (name+content) implied in the most extensive optimization mode.
+    if (localName.contains("#")) throw new SAXException("Bad XML holding tags containing '#' characters, which are forbidden.");
     currentXMLTagSequence.add(eName);
 
     // Name space collation, if space full parsing is performed.
@@ -221,7 +253,7 @@ class StructureHandler extends DefaultHandler implements LexicalHandler
     // Records the element attributes if any and if expected, with appropriate tag properties.
     if ((withAttributes == true) && (atts != null) && (atts.getLength() != 0)) updateAttributeProperties(atts);
 
-    // Root element detection
+    // Root element detection.
     if (rootTag == null) rootTag = eName;
   }
 
@@ -382,7 +414,8 @@ class StructureHandler extends DefaultHandler implements LexicalHandler
 
   /**
    * Takes the XPath tag sequence of the currently parsed XML element and initializes the element properties if they don't exist yet.<br>
-   * Default element properties are: <code>XML2CSVCardinality.ONE_TO_ONE</code> (mandatory single element), and <code>XML2CSVType.UNKNOWN</code>.
+   * Default element properties are: <code>XML2CSVCardinality.ONE_TO_ONE</code> (mandatory single element), <code>XML2CSVType.UNKNOWN</code>, and <code>0</code> global occurrence
+   * count.
    */
   private void updateProperties()
   {
@@ -390,12 +423,221 @@ class StructureHandler extends DefaultHandler implements LexicalHandler
 
     if (properties.containsKey(xpath) == false)
     {
-      String[] props = new String[2];
+      String[] props = new String[3];
       // By default, a new element is supposed mandatory and mono-occurrence and might be set to optional and/or unbounded later on.
       props[0] = XML2CSVCardinality.ONE_TO_ONE.getCode();
       // By default, a new element is of UNKNOWN type, which will be narrowed later on for something more accurate for a leaf element.
       props[1] = XML2CSVType.UNKNOWN.getCode();
+      // The global element occurrence count is initialized to 0 for a new element and will be incremented by 1 for each occurrence in the template file when the element is closed.
+      props[2] = Long.toString(0);
       properties.put(xpath, props);
+    }
+  }
+
+  /**
+   * Explores the element graph in order to devise a resulting list of elements which should be provided a virtual attribute.<br>
+   * Candidate elements are the <i>intermediate</i> elements under the root element (excluded) which:
+   * <ul>
+   * <li>either are repeated "<i>enough</i>" themselves through the whole template file (conventionally: at least
+   * {@link utils.xml.xml2csv.constants.XML2CSVMisc#ELEMENT_REPETITION_THRESHOLD this} occurrence count or above), or
+   * <li>are mono-occurrence elements or multi-occurrence elements not repeated "<i>enough</i>", from which all non-leaf descendant elements are either single or not repeated
+   * "<i>enough</i>" themselves through the whole template file.
+   * </ul>
+   * The search ends when candidates have been found at all graph depths (deeper depths are searched too).<br>
+   * A virtual attribute serves as aggregation catalyst which maximizes {@link utils.xml.xml2csv.constants.XML2CSVOptimization#EXTENSIVE_V2 EXTENSIVE_V2} optimization into a
+   * {@link utils.xml.xml2csv.constants.XML2CSVOptimization#EXTENSIVE_V3 EXTENSIVE_V3} one without major algorithm change.<br>
+   * Recursive method.
+   * @param currentXpath the current XPath associated with the graph part.
+   * @param currentGraph the current graph part to explore.
+   * @param result the XPath list of elements which should get a virtual attribute, enriched while the graph is searched.
+   * @throws SAXException in case of error.
+   */
+  @SuppressWarnings("unchecked")
+  private void deviseCatalystElementXPaths(String currentXpath, LinkedHashMap<String, Object> currentGraph, ArrayList<String> result) throws SAXException
+  {
+    Set<String> keySet = currentGraph.keySet();
+    if (keySet.size() == 0)
+    {
+      // Bottom graph leaf element reached. Leaf elements are never good candidates for virtual attributes. We do nothing.
+    }
+    else
+    {
+      // Intermediate graph element reached.
+      boolean candidate = false;
+      String[] props = properties.get(currentXpath);
+      if (props != null)
+      {
+        // If the element is repeated "enough" it is added to the candidate list.
+        long globalElementCount = Long.parseLong(props[2]);
+        if (globalElementCount >= XML2CSVMisc.ELEMENT_REPETITION_THRESHOLD)
+        {
+          XML2CSVLoggingFacade.log(XML2CSVLogLevel.DEBUG, "deviseCatalystElementXPaths: element <" + currentXpath + "> is a primary candidate for optimization maximization.");
+          candidate = true;
+        }
+        else
+        {
+          // If the element is not repeated "enough" its descendants are examined and if none of them are repeated "enough" themselves the element is added to the candidate list.
+          Iterator<String> iterator = keySet.iterator();
+          if (iterator.hasNext()) candidate = true;
+          while (iterator.hasNext())
+          {
+            String node = iterator.next();
+            String oneChildXpath = null;
+            if (!currentXpath.equals(XML2CSVMisc.EMPTY_STRING)) oneChildXpath = currentXpath + "." + node;
+            else
+              oneChildXpath = node;
+            LinkedHashMap<String, Object> nextGraph = (LinkedHashMap<String, Object>) currentGraph.get(node);
+            candidate = candidate && examineChildrenRepetition(oneChildXpath, oneChildXpath, nextGraph);
+            if (candidate == false)
+            {
+              XML2CSVLoggingFacade.log(XML2CSVLogLevel.DEBUG, "deviseCatalystElementXPaths: element <" + currentXpath
+                  + "> cannot be a secondary candidate for optimization maximization.");
+              break;
+            }
+          }
+        }
+        if (currentXpath.indexOf(".") == -1) candidate = false; // The root element is excluded (only XPath without ".") to avoid edge effects.
+        if (candidate == true)
+        {
+          XML2CSVLoggingFacade.log(XML2CSVLogLevel.DEBUG, "deviseCatalystElementXPaths: element <" + currentXpath + "> is a secondary candidate for optimization maximization.");
+          result.add(currentXpath);
+        }
+      }
+      else
+      {
+        if (currentXpath.isEmpty() == false)
+        {
+          // Cannot happen unless there is a bug somewhere => SAXException raised immediately in order to abort everything.
+          throw new SAXException("Internal parsing failure. Missing properties for element <" + currentXpath + ">. Location: method <deviseCatalystElementXPaths> #1");
+        }
+        else
+        {
+          // Edge effect at the beginning of the recursive graph analysis, which starts with an empty currentXpath. We do nothing.
+        }
+      }
+      // The nested elements of the intermediate element are searched too, no matter if the current element was a candidate or not.
+      // if (candidate == false)
+      {
+        Iterator<String> iterator = keySet.iterator();
+        while (iterator.hasNext())
+        {
+          String node = iterator.next();
+          String nextXpath = null;
+          if (!currentXpath.equals(XML2CSVMisc.EMPTY_STRING)) nextXpath = currentXpath + "." + node;
+          else
+            nextXpath = node;
+          LinkedHashMap<String, Object> nextGraph = (LinkedHashMap<String, Object>) currentGraph.get(node);
+          deviseCatalystElementXPaths(nextXpath, nextGraph, result);
+        }
+      }
+    }
+  }
+
+  /**
+   * Examines all the intermediate descendant elements of the element associated with the <code>initialXPath</code> parameter and returns <code>true</code> if none of them are
+   * repeated "<i>enough</i>" (convention: at least {@link utils.xml.xml2csv.constants.XML2CSVMisc#ELEMENT_REPETITION_THRESHOLD this} occurrence count) or <code>false</code>
+   * otherwise.<br>
+   * Recursive method.
+   * @param initialXPath the initial XPath associated with the starting graph part.
+   * @param currentXpath the current XPath associated with the graph part.
+   * @param currentGraph the current graph part to explore.
+   * @return <code>true</code> if all the descendant elements of the initial XPath are not repeated "<i>enough</i>" and <code>false</code> otherwise.
+   * @throws SAXException in case of error.
+   */
+  @SuppressWarnings("unchecked")
+  private boolean examineChildrenRepetition(String initialXPath, String currentXpath, LinkedHashMap<String, Object> currentGraph) throws SAXException
+  {
+    boolean result = true;
+    Set<String> keySet = currentGraph.keySet();
+    if (keySet.size() == 0)
+    {
+      // Bottom graph leaf element reached. Leaf elements are not concerned by the examination.
+    }
+    else
+    {
+      // Intermediate graph element reached.
+      String[] props = properties.get(currentXpath);
+      if (props != null)
+      {
+        // If the element is repeated "enough" it is added to the candidate list.
+        long globalElementCount = Long.parseLong(props[2]);
+        if (globalElementCount >= XML2CSVMisc.ELEMENT_REPETITION_THRESHOLD)
+        {
+          XML2CSVLoggingFacade.log(XML2CSVLogLevel.DEBUG2, "examineChildrenRepetition: element <" + currentXpath + "> prevents its ancestor <" + initialXPath
+              + "> from being a secondary candidate for optimization maximization.");
+          result = false;
+        }
+        else
+        {
+          Iterator<String> iterator = keySet.iterator();
+          while (iterator.hasNext())
+          {
+            String node = iterator.next();
+            String nextXpath = null;
+            if (!currentXpath.equals(XML2CSVMisc.EMPTY_STRING)) nextXpath = currentXpath + "." + node;
+            else
+              nextXpath = node;
+            LinkedHashMap<String, Object> nextGraph = (LinkedHashMap<String, Object>) currentGraph.get(node);
+            result = result && examineChildrenRepetition(initialXPath, nextXpath, nextGraph);
+          }
+        }
+      }
+      else
+      {
+        // Cannot happen unless there is a bug somewhere => SAXException raised immediately in order to abort everything.
+        throw new SAXException("Internal parsing failure. Missing properties for element <" + currentXpath + ">. Location: method <examineChildren> #1");
+      }
+    }
+    return result;
+  }
+
+  /**
+   * Creates a virtual hidden attribute definition for the element associated with the XPath provided in parameter.<br>
+   * A virtual attribute serves as aggregation catalyst which maximizes {@link utils.xml.xml2csv.constants.XML2CSVOptimization#EXTENSIVE_V2 EXTENSIVE_V2} optimization into a
+   * {@link utils.xml.xml2csv.constants.XML2CSVOptimization#EXTENSIVE_V3 EXTENSIVE_V3} one without major algorithm change.
+   * @param xpath the XPath of the element which will be provided a virtual attribute.
+   */
+  private void generateCatalystAttribute(String xpath)
+  {
+    if (attributes.containsKey(xpath) == false)
+    {
+      // The element has no attribute list.
+      ArrayList<String[]> attsList = new ArrayList<String[]>();
+      String[] att = new String[3];
+      att[0] = XML2CSVMisc.VIRTUAL_ATTRIBUTE;
+      // Virtual attributes have neither cardinality nor type but are provided default values to avoid edge effects.
+      att[1] = XML2CSVCardinality.ONE_TO_ONE.getCode();
+      att[2] = XML2CSVType.STRING.getCode();
+      attsList.add(att);
+      attributes.put(xpath, attsList);
+    }
+    else
+    {
+      // The element has already an attribute definition list.
+      ArrayList<String[]> attsList = attributes.get(xpath);
+      int idxOfAtt = -1;
+      for (int j = 0; j < attsList.size(); j++)
+      {
+        if (attsList.get(j)[0].equals(XML2CSVMisc.VIRTUAL_ATTRIBUTE))
+        {
+          idxOfAtt = j;
+          break;
+        }
+      }
+      if (idxOfAtt == -1)
+      {
+        // The element has already an attribute definition list but no virtual attribute yet. We add one.
+        String[] att = new String[3];
+        att[0] = XML2CSVMisc.VIRTUAL_ATTRIBUTE;
+        // Virtual attributes have neither cardinality nor type but are provided default values to avoid edge effects.
+        att[1] = XML2CSVCardinality.ONE_TO_ONE.getCode();
+        att[2] = XML2CSVType.STRING.getCode();
+        attsList.add(0, att); // The virtual attribute is placed by default on the top of the attribute list.
+      }
+      else
+      {
+        // The virtual attribute has already been added to the element's attribute list. We do nothing.
+      }
     }
   }
 
@@ -425,7 +667,7 @@ class StructureHandler extends DefaultHandler implements LexicalHandler
     }
     else
     {
-      // We have already met this attribute, which exists already in the list associated with the currently parsed element.
+      // We have already met attributes for the currently parsed element. It has already an attribute definition list, which we examine now.
       ArrayList<String[]> attsList = attributes.get(xpath);
       int idxOfPrevAtt = -1; // Helps to insert a new attribute at its correct place in the list.
       for (int i = 0; i < atts.getLength(); i++)
@@ -488,7 +730,7 @@ class StructureHandler extends DefaultHandler implements LexicalHandler
   }
 
   /**
-   * Detects optional elements when an element is closed.<br>
+   * Detects optional elements when an element is closed as well as multi-occurrence elements.<br>
    * The detection is based on the recording for each parent element's XPath depth of the short names of the sub elements met/parsed, and comparison with the graph which serves
    * as a reference.
    */
@@ -527,15 +769,21 @@ class StructureHandler extends DefaultHandler implements LexicalHandler
       if (XML2CSVCardinality.isUnbounded(props[0]) == false)
       {
         props[0] = XML2CSVCardinality.setToUnbounded(props[0]);
-        properties.put(getXPathAsString(currentXMLTagSequence), props); // Useless instruction, but anyway.
         XML2CSVLoggingFacade.log(XML2CSVLogLevel.DEBUG2, "detectElementsCardinality: cardinality of element <" + getXPathAsString(currentXMLTagSequence) + "> set to unbounded.");
       }
+      // We don't forget to increase the global element count.
+      props[2] = Long.toString(Long.parseLong(props[2]) + 1L);
+      properties.put(getXPathAsString(currentXMLTagSequence), props); // Useless instruction, but anyway.
     }
     else
     {
       // OK: not already there. We add it.
       childrenElementShortNamesOfParent.add(shortNameOfCurrentElement);
       childrenElementShortNamesPerParentDepth.set(currentXMLTagSequence.size() - 1, childrenElementShortNamesOfParent);
+      // We don't forget to increase the global element count.
+      String[] props = properties.get(getXPathAsString(currentXMLTagSequence)); // Exists since startElement occurs before endElement.
+      props[2] = Long.toString(Long.parseLong(props[2]) + 1L);
+      properties.put(getXPathAsString(currentXMLTagSequence), props); // Useless instruction, but anyway.
     }
 
     // The element short name list at index {current element's depth} lists the direct children elements which were actually met in the current XML element block.
@@ -592,7 +840,7 @@ class StructureHandler extends DefaultHandler implements LexicalHandler
   }
 
   /**
-   * Records the currently closing XML element as the new previous element of the corresponding depth and clears all previous elements of deeper depth to avoid side effects (=
+   * Records the currently closing XML element as the new previous element of the corresponding depth and clears all previous elements of deeper depth to avoid edge effects (=
    * with the previous occurrence of the parent block).
    */
   private void recordPreviousElement()
@@ -613,7 +861,7 @@ class StructureHandler extends DefaultHandler implements LexicalHandler
     previousXMLTagSequence.addAll(currentXMLTagSequence);
     previousXMLTagSequencePerDepth.set(currentXMLTagSequence.size() - 1, previousXMLTagSequence);
 
-    // Previous elements of deeper depth are discarded to avoid side effects.
+    // Previous elements of deeper depth are discarded to avoid edge effects.
     // If not imagine:
     // <Row>
     // <Data1>12</Data1>
@@ -816,8 +1064,9 @@ class StructureHandler extends DefaultHandler implements LexicalHandler
     {
       // Bottom graph element reached: currentXpath is the XPath of an actual leaf XML element.
       flatLeafElementXPathList.add(currentXpath);
-      // If attribute tracking is activated and if the element has attributes, they are added just after the element to the list.
-      if ((withAttributes == true) && (attributes.containsKey(currentXpath) == true))
+      // If the element has attributes (either because attribute tracking is activated or because virtual attributes were generate to comply with the most extensive optimization
+      // mode, or both), they are added just after the element to the list.
+      if (attributes.containsKey(currentXpath) == true)
       {
         ArrayList<String[]> attsList = attributes.get(currentXpath);
         for (int i = 0; i < attsList.size(); i++)
@@ -827,9 +1076,8 @@ class StructureHandler extends DefaultHandler implements LexicalHandler
     else
     {
       // Intermediate graph element reached.
-      // Because we deal with leaf elements only the intermediate element is skipped but if attribute tracking is activated and if the element has attributes,
-      // they are added to the list like if the were leaf elements.
-      if ((withAttributes == true) && (attributes.containsKey(currentXpath) == true))
+      // Because we deal with leaf elements only the intermediate element is skipped but if the element has attributes, they are added to the list like if the were leaf elements.
+      if (attributes.containsKey(currentXpath) == true)
       {
         ArrayList<String[]> attsList = attributes.get(currentXpath);
         for (int i = 0; i < attsList.size(); i++)
@@ -908,7 +1156,7 @@ class StructureHandler extends DefaultHandler implements LexicalHandler
    * Retrieves the current text from the current element text buffer, which is reset alongside.
    * @param trim <code>true</code> to have the text trimmed as well.
    * @return the current text from the current element text buffer.
-   * @throws <code>SAXException</code> in case of error.
+   * @throws SAXException in case of error.
    */
   private String getText(boolean trim) throws SAXException
   {
@@ -1295,14 +1543,14 @@ class StructureHandler extends DefaultHandler implements LexicalHandler
    * <ul>
    * <li>keys are element XPaths;
    * <li>the value associated with a key is a <code>String[3]</code> with: at index <code>0</code>, the element {@link utils.xml.xml2csv.constants.XML2CSVCardinality#getCode()
-   * cardinality code}, at index <code>1</code> the element {@link utils.xml.xml2csv.constants.XML2CSVType#getCode() type code}, and at index <code>2</code> the element
-   * {@link utils.xml.xml2csv.constants.XML2CSVNature#getCode() nature code}.
+   * cardinality code}, at index <code>1</code> the element {@link utils.xml.xml2csv.constants.XML2CSVType#getCode() type code}, at index <code>2</code> the element's occurrence
+   * count (in all the file across all element repetitions), and at index <code>3</code> the element's {@link utils.xml.xml2csv.constants.XML2CSVNature#getCode() nature code}.
    * </ul>
    * @return the whole set of structure elements provided as a <code>HashMap&lt;String, String[]&gt;</code> for random XPath access.
    */
   public HashMap<String, String[]> getAllElementsDescription()
   {
-    // The inner dictionary is cloned, and a 3rd property is added to each element which indicates the element nature.
+    // The inner dictionary is cloned, and an additional property is added after the regular properties for each element indicating the element's nature.
     HashMap<String, String[]> clone = new HashMap<String, String[]>();
     Iterator<String> iterator = properties.keySet().iterator();
     while (iterator.hasNext())
@@ -1321,7 +1569,7 @@ class StructureHandler extends DefaultHandler implements LexicalHandler
         String xpath2 = iterator2.next();
         if ((xpath2.startsWith(xpath)) && (xpath2.length() > xpath.length()) && (xpath2.substring(xpath.length()).startsWith("."))) intermediate = true;
       }
-      copy[props.length] = XML2CSVNature.parse(intermediate, attribute).getCode();
+      copy[props.length] = XML2CSVNature.parse(intermediate, attribute).getCode(); // The element's nature is added at the end of the regular properties.
       clone.put(xpath, copy);
     }
     return clone;

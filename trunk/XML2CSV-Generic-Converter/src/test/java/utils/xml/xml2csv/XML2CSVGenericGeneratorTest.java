@@ -34,10 +34,10 @@ import utils.xml.xml2csv.constants.XML2CSVOptimization;
 public class XML2CSVGenericGeneratorTest
 {
   /** File used for direct output stream test. */
-  private File outputFile = null;
+  private File outputFile1 = null;
 
   /** File used for blend output file test. */
-  private File customOutputFile = null;
+  private File customOutputFile2 = null;
 
   /** File used for positive output stream test. */
   private File outputPositiveFile3 = null;
@@ -47,6 +47,9 @@ public class XML2CSVGenericGeneratorTest
 
   /** File used for name space aware negative output stream test. */
   private File outputNegativeFile4 = null;
+
+  /** File used for unleashed maximized optimization test. */
+  private File outputFile5 = null;
 
   /** Test Log4J configuration file. */
   private File customLog4JFile = null;
@@ -67,13 +70,15 @@ public class XML2CSVGenericGeneratorTest
     Assert.assertNotNull("Test file 2 missing in test resources directory", getClass().getResource("/sample2.xml"));
     Assert.assertNotNull("Test file 3 missing in test resources directory", getClass().getResource("/sample3.xml"));
     Assert.assertNotNull("Test file 4 missing in test resources directory", getClass().getResource("/sample4.xml"));
+    Assert.assertNotNull("Test file 5 missing in test resources directory", getClass().getResource("/sample5.xml"));
     Assert.assertNotNull("Filter file 3 missing in test resources directory", getClass().getResource("/filterFile3.txt"));
     Assert.assertNotNull("Filter file 4 missing in test resources directory", getClass().getResource("/filterFile4.txt"));
-    Assert.assertNotNull("Result file 'customOutput.csv' missing in test resources directory", getClass().getResource("/customOutput.csv"));
-    Assert.assertNotNull("Result file 'output.csv' missing in test resources directory", getClass().getResource("/output.csv"));
+    Assert.assertNotNull("Result file 'output1.csv' missing in test resources directory", getClass().getResource("/output1.csv"));
+    Assert.assertNotNull("Result file 'customOutput2.csv' missing in test resources directory", getClass().getResource("/customOutput2.csv"));
     Assert.assertNotNull("Result file 'output3p.csv' missing in test resources directory", getClass().getResource("/output3p.csv"));
     Assert.assertNotNull("Result file 'output3n.csv' missing in test resources directory", getClass().getResource("/output3n.csv"));
     Assert.assertNotNull("Result file 'output4n.csv' missing in test resources directory", getClass().getResource("/output4n.csv"));
+    Assert.assertNotNull("Result file 'output5.csv' missing in test resources directory", getClass().getResource("/output5.csv"));
     Assert.assertNotNull("Log4J configuration file in test resources directory", getClass().getResource("/xml2csvlog4j.properties"));
   }
 
@@ -87,11 +92,12 @@ public class XML2CSVGenericGeneratorTest
   @Before
   public void setUp() throws Exception
   {
-    outputFile = testFolder.newFile("output.csv");
-    customOutputFile = testFolder.newFile("customOutput.csv");
+    outputFile1 = testFolder.newFile("output1.csv");
+    customOutputFile2 = testFolder.newFile("customOutput2.csv");
     outputPositiveFile3 = testFolder.newFile("output3p.csv");
     outputNegativeFile3 = testFolder.newFile("output3n.csv");
     outputNegativeFile4 = testFolder.newFile("output4n.csv");
+    outputFile5 = testFolder.newFile("output5.csv");
     outputDir = testFolder.newFolder("outputDir");
     logFile = testFolder.newFile("XML2CSV-Generic-Converter.log"); // Generated at the project's root.
 
@@ -114,12 +120,12 @@ public class XML2CSVGenericGeneratorTest
   {
     File sample1 = new File(getClass().getResource("/sample1.xml").toURI());
     File sample2 = new File(getClass().getResource("/sample2.xml").toURI());
-    File expectedOutputFile = new File(getClass().getResource("/output.csv").toURI());
+    File expectedOutputFile1 = new File(getClass().getResource("/output1.csv").toURI());
     File[] inputs = new File[2];
     inputs[0] = sample1;
     inputs[1] = sample2;
 
-    FileOutputStream fos = new FileOutputStream(outputFile);
+    FileOutputStream fos = new FileOutputStream(outputFile1);
 
     XML2CSVGenericGenerator generator = new XML2CSVGenericGenerator(fos);
     generator.setOptimization(XML2CSVOptimization.EXTENSIVE_V1);
@@ -128,7 +134,7 @@ public class XML2CSVGenericGeneratorTest
     generator.generate(inputs, true);
     fos.close();
 
-    Assert.assertEquals(FileUtils.readFileToString(expectedOutputFile, "utf-8"), FileUtils.readFileToString(outputFile, "utf-8"));
+    Assert.assertEquals(FileUtils.readFileToString(expectedOutputFile1, "utf-8"), FileUtils.readFileToString(outputFile1, "utf-8"));
   }
 
   /**
@@ -158,16 +164,16 @@ public class XML2CSVGenericGeneratorTest
   {
     File sample1 = new File(getClass().getResource("/sample1.xml").toURI());
     File sample2 = new File(getClass().getResource("/sample2.xml").toURI());
-    File expectedCustomOutputFile = new File(getClass().getResource("/customOutput.csv").toURI());
+    File expectedCustomOutputFile2 = new File(getClass().getResource("/customOutput2.csv").toURI());
     File[] inputs = new File[2];
     inputs[0] = sample1;
     inputs[1] = sample2;
 
-    XML2CSVGenericGenerator generator = new XML2CSVGenericGenerator(customOutputFile, null);
+    XML2CSVGenericGenerator generator = new XML2CSVGenericGenerator(customOutputFile2, null);
     generator.setOptimization(XML2CSVOptimization.EXTENSIVE_V2);
     generator.generate(inputs, true);
 
-    Assert.assertEquals(FileUtils.readFileToString(expectedCustomOutputFile, "utf-8"), FileUtils.readFileToString(customOutputFile, "utf-8"));
+    Assert.assertEquals(FileUtils.readFileToString(expectedCustomOutputFile2, "utf-8"), FileUtils.readFileToString(customOutputFile2, "utf-8"));
   }
 
   /**
@@ -177,7 +183,7 @@ public class XML2CSVGenericGeneratorTest
   @Test
   public void testFilterFilePositiveGeneration() throws Exception
   {
-    File expectedPositiveOutputFile = new File(getClass().getResource("/output3p.csv").toURI());
+    File expectedPositiveOutputFile3 = new File(getClass().getResource("/output3p.csv").toURI());
     File sample3 = new File(getClass().getResource("/sample3.xml").toURI());
     File[] inputs = new File[1];
     inputs[0] = sample3;
@@ -188,7 +194,7 @@ public class XML2CSVGenericGeneratorTest
     generator.setOptimization(XML2CSVOptimization.EXTENSIVE_V2);
     generator.generate(inputs, null, xpaths, null, true);
 
-    Assert.assertEquals(FileUtils.readFileToString(expectedPositiveOutputFile, "utf-8"), FileUtils.readFileToString(outputPositiveFile3, "utf-8"));
+    Assert.assertEquals(FileUtils.readFileToString(expectedPositiveOutputFile3, "utf-8"), FileUtils.readFileToString(outputPositiveFile3, "utf-8"));
   }
 
   /**
@@ -198,7 +204,7 @@ public class XML2CSVGenericGeneratorTest
   @Test
   public void testFilterFileNegativeGeneration() throws Exception
   {
-    File expectedNegativeOutputFile = new File(getClass().getResource("/output3n.csv").toURI());
+    File expectedNegativeOutputFile3 = new File(getClass().getResource("/output3n.csv").toURI());
     File sample3 = new File(getClass().getResource("/sample3.xml").toURI());
     File[] inputs = new File[1];
     inputs[0] = sample3;
@@ -209,7 +215,7 @@ public class XML2CSVGenericGeneratorTest
     generator.setOptimization(XML2CSVOptimization.EXTENSIVE_V2);
     generator.generate(inputs, null, null, xpaths, true);
 
-    Assert.assertEquals(FileUtils.readFileToString(expectedNegativeOutputFile, "utf-8"), FileUtils.readFileToString(outputNegativeFile3, "utf-8"));
+    Assert.assertEquals(FileUtils.readFileToString(expectedNegativeOutputFile3, "utf-8"), FileUtils.readFileToString(outputNegativeFile3, "utf-8"));
   }
 
   /**
@@ -219,7 +225,7 @@ public class XML2CSVGenericGeneratorTest
   @Test
   public void testNamespacesFilterFileNegativeGeneration() throws Exception
   {
-    File expectedNegativeOutputFile = new File(getClass().getResource("/output4n.csv").toURI());
+    File expectedNegativeOutputFile4 = new File(getClass().getResource("/output4n.csv").toURI());
     File sample4 = new File(getClass().getResource("/sample4.xml").toURI());
     File[] inputs = new File[1];
     inputs[0] = sample4;
@@ -231,7 +237,27 @@ public class XML2CSVGenericGeneratorTest
     generator.setWarding(true);
     generator.generate(inputs, null, null, xpaths, true);
 
-    Assert.assertEquals(FileUtils.readFileToString(expectedNegativeOutputFile, "utf-8"), FileUtils.readFileToString(outputNegativeFile4, "utf-8"));
+    Assert.assertEquals(FileUtils.readFileToString(expectedNegativeOutputFile4, "utf-8"), FileUtils.readFileToString(outputNegativeFile4, "utf-8"));
+  }
+
+  /**
+   * Tests unleashed maximized XML to CSV conversion of one file containing both elements and attributes.
+   * @throws Exception in case of error.
+   */
+  @Test
+  public void testUnleashedGeneration() throws Exception
+  {
+    File expectedOutputFile5 = new File(getClass().getResource("/output5.csv").toURI());
+    File sample5 = new File(getClass().getResource("/sample5.xml").toURI());
+    File[] inputs = new File[1];
+    inputs[0] = sample5;
+
+    XML2CSVGenericGenerator generator = new XML2CSVGenericGenerator(outputFile5, null);
+    generator.setOptimization(XML2CSVOptimization.EXTENSIVE_V3);
+    generator.setUnleashing(true);
+    generator.generate(inputs, true);
+
+    Assert.assertEquals(FileUtils.readFileToString(expectedOutputFile5, "utf-8"), FileUtils.readFileToString(outputFile5, "utf-8"));
   }
 
   /**
@@ -241,11 +267,12 @@ public class XML2CSVGenericGeneratorTest
   @After
   public void clean() throws Exception
   {
-    outputFile.delete();
-    customOutputFile.delete();
+    outputFile1.delete();
+    customOutputFile2.delete();
     outputPositiveFile3.delete();
     outputNegativeFile3.delete();
     outputNegativeFile4.delete();
+    outputFile5.delete();
     File[] contents = outputDir.listFiles();
     for (int i = 0; i < contents.length; i++)
       contents[i].delete();
