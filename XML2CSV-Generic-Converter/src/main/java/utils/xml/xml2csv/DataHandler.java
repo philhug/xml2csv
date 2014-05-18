@@ -339,9 +339,9 @@ class DataHandler extends DefaultHandler implements LexicalHandler
     textBuffer = null;
 
     // Increases the number of opened tracked element parents if it happens that the current opened element is a parent of a tracked element,
-    // provided that it is not the root element (the root element is explicitly excluded for performance purpose even when it is nesting a
-    // tracked element because including it would mean to wait for the root tag end to reach consistency and flush the buffer, that is, in
-    // other words, to read the whole XML file before processing it which is definitely not what we want).
+    // provided that it is not the root element (unless optimization is unleashed the root element is explicitly excluded for performance
+    // purpose even when it is nesting a tracked element because including it would mean to wait for the root tag end to reach consistency
+    // and flush the buffer, that is, in other words, to read the whole XML file before processing it which is definitely not what we want).
     // Sends the information to the data buffer too for optimization purpose. Does nothing in raw mode i.e. when optimization is deactivated.
     if (level != XML2CSVOptimization.NONE)
     {
@@ -477,9 +477,9 @@ class DataHandler extends DefaultHandler implements LexicalHandler
     }
 
     // Decreases the number of opened tracked element parents if it happens that the current closed element is a parent of a tracked element,
-    // provided that it is not the root element (the root element is explicitly excluded for performance purpose even when it is nesting a
-    // tracked element because including it would mean to wait for the root tag end to reach consistency and flush the buffer, that is, in
-    // other words, to read the whole XML file before processing it which is definitely not what we want).
+    // provided that it is not the root element (unless optimization is unleashed the root element is explicitly excluded for performance
+    // purpose even when it is nesting a tracked element because including it would mean to wait for the root tag end to reach consistency
+    // and flush the buffer, that is, in other words, to read the whole XML file before processing it which is definitely not what we want).
     // Sends the information to the data buffer too for optimization purpose. Does nothing in raw mode i.e. when optimization is deactivated.
     if (level != XML2CSVOptimization.NONE)
     {

@@ -614,9 +614,9 @@ class DataBuffer
           // the current trackedParentOpening-based pack loop which will pack all attributes on the same line. As a result the element content will appear
           // on a line and its attributes on the next => KO.
           // An easy way to solve this is to explicitly add the column corresponding to trackedParentOpening itself, if any, to the pack list in order to add
-          // trackedParentOpening's content, if any between inf and sup (which can't be unless trackedParentOpening be a leaf element), to the pack list.
+          // trackedParentOpening's content, if any between inf and sup (which can't be unless trackedParentOpening is a leaf element), to the pack list.
           // This is exactly what is done hereafter.
-          // The lines hereafter, which are extracted from a debug log before the corresponding buffer be changed by pack loops, provide a concrete example.
+          // The lines hereafter, which are extracted from a debug log before the corresponding buffer is changed by pack loops, provide a concrete example.
           // Element root.row.comment is a leaf repeated element with 2 attributes (lang and idx) and because ByeBye has not root.row.comment for its parent
           // (it is root.row.comment's content) it would normally be excluded from trackedParentOpening=root.row.comment's own regular and/or enhanced pack loop
           // but is explicitly added hereafter.
@@ -772,7 +772,7 @@ class DataBuffer
                       // ZERO_TO_ONE/ONE_TO_ONE tracked elements downward copy, and all of the remnant candidate y lines between x+1
                       // and sup were also in that scope and received the same fields for the same reason.
                       // This shallow copy is not seen as an actual error just a borderline effect of optimization flip-flops.
-                      // Of course there is a slight possibility that it be an actual bug just like the next case but the probability
+                      // Of course there is a slight possibility that it is an actual bug just like the next case but the probability
                       // remains very low.
                       // If this is the 1st optimization loop line y becomes empty, but if several loops have already been performed
                       // on the same buffer it might not be the case and the other fields might contain copies of previous fields.
@@ -900,7 +900,7 @@ class DataBuffer
                               // ZERO_TO_ONE/ONE_TO_ONE tracked elements downward copy, and all of the remnant candidate y lines between x+1
                               // and sup were also in that scope and received the same fields for the same reason.
                               // This shallow copy is not seen as an actual error just a borderline effect of optimization flip-flops.
-                              // Of course there is a slight possibility that it be an actual bug just like the next case but the probability
+                              // Of course there is a slight possibility that it is an actual bug just like the next case but the probability
                               // remains very low.
                               atLeastOneExtensivePackingDone = true;
                               extensivePackingChangedBuffer = true;
@@ -982,7 +982,7 @@ class DataBuffer
    * tracked element at its corresponding index, before going on with the next buffer line subset.<br>
    * An {@link utils.xml.xml2csv.constants.XML2CSVOptimization#EXTENSIVE_V1 EXTENSIVE_V1} buffer line subset optimization is a
    * {@link utils.xml.xml2csv.constants.XML2CSVOptimization#STANDARD STANDARD} one plus back copy of the packed line X into each multi-occurrence element line of LS provided that
-   * its parent block be either P or a sub block of P, plus mono-occurrence element line of LS whose parent is a sub block of P.<br>
+   * its parent block is either P or a sub block of P, plus mono-occurrence element line of LS whose parent is a sub block of P.<br>
    * Optimization ends when the last buffer line subset has been processed (when the last line block enclosed by tracked element's parent opening/closing has been performed).
    * @return <code>true</code> if the optimization changed something in the buffer.
    * @throws SAXException in case of error.
@@ -1002,7 +1002,7 @@ class DataBuffer
       // Each time a tracked parent opening P is met (in column trackedLeafElementXPaths.length) the next closing index of the same kind is searched
       // (in column trackedLeafElementXPaths.length+1): one optimization sub routine is then triggered between the corresponding inf and sup indices of the buffer,
       // and all mono-occurrence (ZERO_TO_ONE or ONE_TO_ONE) tracked elements which have P as their parent are packed on the same line x (leaving a certain amount of blank
-      // lines between line x+1 and sup which are left as is because they will be silently discarded when the buffer will be echoed to the output).
+      // lines between line x+1 and sup which are left as is because they willsilently discarded when the buffer will be echoed to the output).
       // If an extensive optimization is expected then:
       // - the data of line x is copied back into all non empty lines containing a field in connection with a multi-occurrence (ZERO_TO_MANY or ONE_TO_MANY) tracked element
       // which has either P as its parent or a sub element of P as its parent, plus lines containing a field in connection with a mono-occurrence (ZERO_TO_ONE or ONE_TO_ONE)
