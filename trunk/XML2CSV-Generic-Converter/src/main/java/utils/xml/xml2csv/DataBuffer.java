@@ -56,19 +56,19 @@ class DataBuffer
   private XML2CSVOptimization level = null;
 
   /** XML data tracking: the ordered list of tracked leaf element XPaths in the input XML files. */
-  private static String[] trackedLeafElementXPaths = null;
+  private String[] trackedLeafElementXPaths = null;
 
   /** XML data tracking: the ordered list of tracked leaf element parent XPaths in the input XML files. */
-  private static String[] trackedLeafElementParentXPaths = null;
+  private String[] trackedLeafElementParentXPaths = null;
 
   /** XML data tracking: the ordered list of tracked leaf element cardinalities in the XML input files. */
-  private static XML2CSVCardinality[] trackedLeafElementCardinalities = null;
+  private XML2CSVCardinality[] trackedLeafElementCardinalities = null;
 
   /** XML data tracking: the tracked leaf element description from which all tracking information comes from. */
   private ElementsDescription trackedLeafElementsDescription = null;
 
   // XML data tracking: the ordered list of tracked leaf element types in the XML input files.
-  // private static Type[] trackedLeafElementTypes = null;
+  // private Type[] trackedLeafElementTypes = null;
 
   /**
    * The actual data buffer shaped as an array list of one dimension string arrays, each of them representing a line. A line will hold as many columns as there are tracked
@@ -99,10 +99,10 @@ class DataBuffer
     else
       this.level = XML2CSVOptimization.STANDARD;
 
-    DataBuffer.trackedLeafElementXPaths = trackedLeafElementsDescription.getElementsXPaths();
-    DataBuffer.trackedLeafElementParentXPaths = trackedLeafElementsDescription.getElementsParentXPaths();
-    DataBuffer.trackedLeafElementCardinalities = trackedLeafElementsDescription.getElementsCardinalities();
-    // DataBuffer.trackedLeafElementTypes = trackedLeafElementsDescription.getElementsTypes();
+    this.trackedLeafElementXPaths = trackedLeafElementsDescription.getElementsXPaths();
+    this.trackedLeafElementParentXPaths = trackedLeafElementsDescription.getElementsParentXPaths();
+    this.trackedLeafElementCardinalities = trackedLeafElementsDescription.getElementsCardinalities();
+    // this.trackedLeafElementTypes = trackedLeafElementsDescription.getElementsTypes();
 
     this.trackedLeafElementsDescription = trackedLeafElementsDescription;
   }

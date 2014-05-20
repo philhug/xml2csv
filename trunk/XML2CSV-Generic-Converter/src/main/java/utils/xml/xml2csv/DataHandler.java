@@ -47,16 +47,8 @@ import org.xml.sax.helpers.DefaultHandler;
  * The {@link utils.xml.xml2csv.constants.XML2CSVOptimization#STANDARD STANDARD} data packing operation consists in regrouping on the same line cells corresponding to
  * mono-occurrence elements of the same block (i.e. within the same parent block).<br>
  * When the optimization phase is over the buffer is flushed to the output and the rest of the XML input file is processed on the same <i>buffer-then-pack-then-flush</i> basis.<br>
- * This buffering strategy is fairly efficient and the buffer size remains relatively small no matter what the XML input file size is <b>*but*</b> for one case, that is, namely, if
- * it happens that one of the tracked XML leaf elements is both multi-occurrence and also <b>*heavily*</b> repeated (something like thousands of times): in such situation the
- * buffer size would grow accordingly in order to fit the data before the program actually gets a chance to flush it.<br>
- * In those rare situations the program might run out of memory and go bye-bye.<br>
- * In such case, the use should consider:<br>
- * <ul>
- * <li>either to narrow the extraction in order to discard such a pathological XML leaf element from the track list if it is not really needed, and then rerun the program;
- * <li>or to rerun the program with deactivated optimization (input parameter <code>level</code> = {@link utils.xml.xml2csv.constants.XML2CSVOptimization#NONE NONE}) in order to
- * turn both buffering and data packing off.
- * </ul>
+ * This buffering strategy is fairly efficient and the buffer size remains relatively small no matter what the XML input file size is, provided that the data dependency remains
+ * under control (see the documentation for further information on this topic).<br>
  * The same SAX handler can be used to parse several XML input files in a row, one at a time, provided that its {@link utils.xml.xml2csv.DataHandler#reset() reset} method be called
  * between parsings.<br>
  * The {@link utils.xml.xml2csv.OutputWriterFacade OutputWriterFacade} instance provided to the constructor, which is in charge of the actual CSV file writings, might be
