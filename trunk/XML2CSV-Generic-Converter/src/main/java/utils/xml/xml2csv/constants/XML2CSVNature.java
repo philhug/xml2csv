@@ -20,7 +20,7 @@ package utils.xml.xml2csv.constants;
  * <li><code>INTERMEDIATE_ELEMENT</code> for an intermediate element;
  * <li><code>INTERMEDIATE_ELEMENT_ATTRIBUTE</code> for an attribute of an intermediate element;
  * <li><code>LEAF_ELEMENT</code> for a leaf element;
- * <li><code>LEAF_ELEMENT_ATTRIBUTE</code> for an attribute of a leaf element.
+ * <li><code>LEAF_ELEMENT_ATTRIBUTE</code> for an attribute of a leaf element;
  * <li><code>MIXTURE_ELEMENT</code> for an element which is both intermediate and leaf (that is, an intermediate element which has a content too).
  * </ul>
  * @author L. Popieul (lochrann@rocketmail.com)
