@@ -1076,7 +1076,19 @@ class StructureHandler extends DefaultHandler implements LexicalHandler
     else
     {
       // Intermediate graph element reached.
-      // Because we deal with leaf elements only the intermediate element is skipped but if the element has attributes, they are added to the list like if the were leaf elements.
+      // Because we deal with leaf elements only an intermediate element is skipped but if the element has attributes, they are added to the list like if the were leaf elements.
+      // Exception: a mixture element (both intermediate and leaf) should be treated as a leaf element. A mixture element has an actual element type (something which might happen
+      // only if the element has a content) but contains also sub elements.
+      if (currentXpath.isEmpty() == false) // Edge effect at the beginning of the graph analysis (which starts with an empty XPath, obviously absent from the property list.
+      {
+        String[] props = properties.get(currentXpath);
+        XML2CSVType type = XML2CSVType.parse(props[1]);
+        if (type != XML2CSVType.UNKNOWN)
+        {
+          // We're dealing with a mixture element.
+          flatLeafElementXPathList.add(currentXpath);
+        }
+      }
       if (attributes.containsKey(currentXpath) == true)
       {
         ArrayList<String[]> attsList = attributes.get(currentXpath);
@@ -1539,7 +1551,7 @@ class StructureHandler extends DefaultHandler implements LexicalHandler
   }
 
   /**
-   * Returns a description of all the elements (leaf or intermediate) met in the structure provided as an a <code>HashMap&lt;String, String[]&gt;</code> for random access where:<br>
+   * Returns a description of all the elements (leaf or intermediate) met in the structure provided as a <code>HashMap&lt;String, String[]&gt;</code> for random access where:<br>
    * <ul>
    * <li>keys are element XPaths;
    * <li>the value associated with a key is a <code>String[3]</code> with: at index <code>0</code>, the element {@link utils.xml.xml2csv.constants.XML2CSVCardinality#getCode()
@@ -1551,6 +1563,7 @@ class StructureHandler extends DefaultHandler implements LexicalHandler
   public HashMap<String, String[]> getAllElementsDescription()
   {
     // The inner dictionary is cloned, and an additional property is added after the regular properties for each element indicating the element's nature.
+    // At present attributes are not recorded in the dictionary but they might be in the future, and this method handles them already.
     HashMap<String, String[]> clone = new HashMap<String, String[]>();
     Iterator<String> iterator = properties.keySet().iterator();
     while (iterator.hasNext())
@@ -1560,6 +1573,7 @@ class StructureHandler extends DefaultHandler implements LexicalHandler
       String[] copy = new String[props.length + 1];
       for (int i = 0; i < props.length; i++)
         copy[i] = props[i];
+      XML2CSVType type = XML2CSVType.parse(props[1]);
       boolean attribute = false; // True it the xpath maps an attribute, and false if it is a regular element.
       if (xpath.indexOf("@") != -1) attribute = true;
       boolean intermediate = false; // True if the xpath maps an intermediate element (with sub elements), and false if it is a leaf element.
@@ -1569,7 +1583,7 @@ class StructureHandler extends DefaultHandler implements LexicalHandler
         String xpath2 = iterator2.next();
         if ((xpath2.startsWith(xpath)) && (xpath2.length() > xpath.length()) && (xpath2.substring(xpath.length()).startsWith("."))) intermediate = true;
       }
-      copy[props.length] = XML2CSVNature.parse(intermediate, attribute).getCode(); // The element's nature is added at the end of the regular properties.
+      copy[props.length] = XML2CSVNature.parse(intermediate, attribute, type).getCode(); // The element's nature is added at the end of the regular properties.
       clone.put(xpath, copy);
     }
     return clone;

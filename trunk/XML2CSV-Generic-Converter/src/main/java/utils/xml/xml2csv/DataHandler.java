@@ -370,7 +370,7 @@ class DataHandler extends DefaultHandler implements LexicalHandler
       }
       else
       {
-        // The element does not exit in the dictionary: option -2- by default.
+        // The element does not exist in the dictionary: option -2- by default.
         isLeaf = false;
       }
       if (isLeaf == false) handleAttributes(); // Option -2-: un-stacks and handles immediately the attributes of an intermediate element.
@@ -457,7 +457,7 @@ class DataHandler extends DefaultHandler implements LexicalHandler
       }
       else
       {
-        // The element does not exit in the dictionary and its nature is undefined.
+        // The element does not exist in the dictionary and its nature is undefined.
         // Its attributes were handled in method startElement like for intermediate elements.
         isLeaf = false;
       }
