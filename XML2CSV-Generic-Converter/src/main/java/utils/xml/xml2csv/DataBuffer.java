@@ -441,7 +441,7 @@ class DataBuffer
       XML2CSVLoggingFacade.log(XML2CSVLogLevel.DEBUG3, "<" + buffer.size() + "> lines in buffer before raw buffer cleaning. Original content:");
       displayBufferContent();
     }
-    // Step 1: the list of tracked elements without actual data is devised from the raw data buffer. XPaths of parent blocs without data are collected.
+    // Step 1: the list of tracked elements without actual data is devised from the raw data buffer. XPaths of parent blocks without data are collected.
     // Virtual attribute values are not seen as actual data.
     HashMap<String, ArrayList<int[]>> datalessXPaths = new HashMap<String, ArrayList<int[]>>();
     int inf = 0;
