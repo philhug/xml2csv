@@ -71,7 +71,7 @@ public class XML2CSVGenericGenerator
   /** The CSV field separator to use. */
   private String csvFieldSeparator = null;
 
-  /** The character encoding to use in output. */
+  /** The character encoding to use for the output. */
   private Charset encoding = null;
 
   /** The chosen optimization level. */
@@ -473,7 +473,7 @@ public class XML2CSVGenericGenerator
       {
         activeOutput = false;
         // Final CSV output closing, unless it is a direct output (if so, left to the caller's responsibility).
-        if ((outputWriterFacade != null) && (output == null)) outputWriterFacade.close(); // If the OutputWriterFacade constructor failed outputWriterFacade is null.
+        if ((outputWriterFacade != null) && (output == null)) outputWriterFacade.close(); // If the OutputWriterFacade constructor failed then outputWriterFacade is null.
       }
       catch (IOException ioe)
       {

@@ -29,7 +29,7 @@ package utils.xml.xml2csv.constants;
 public enum XML2CSVOptimization
 {
   /** Disabled optimization. */
-  NONE("N", "No optomization"),
+  NONE("N", "No optimization"),
 
   /** Standard optimization. */
   STANDARD("S", "Standard optimization mode"),
