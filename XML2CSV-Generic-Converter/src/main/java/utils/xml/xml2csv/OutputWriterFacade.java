@@ -294,8 +294,8 @@ class OutputWriterFacade
   }
 
   /**
-   * Returns the current CSV output filename, of <code>null</code> when not undefined.
-   * @return the current CSV output filename, of <code>null</code>.
+   * Returns the current CSV output filename, or <code>null</code> when not undefined.
+   * @return the current CSV output filename, or <code>null</code>.
    */
   public String getOuputFileName()
   {
@@ -307,8 +307,8 @@ class OutputWriterFacade
   }
 
   /**
-   * Returns the current CSV output absolute path, of <code>null</code> when not undefined.
-   * @return the current CSV output absolute path, of <code>null</code>.
+   * Returns the current CSV output absolute path, or <code>null</code> when not undefined.
+   * @return the current CSV output absolute path, or <code>null</code>.
    */
   public String getOutputAbsolutePath()
   {
@@ -318,8 +318,8 @@ class OutputWriterFacade
   }
 
   /**
-   * Returns a string URI pointing to the current CSV output directory, of <code>null</code> when not undefined.
-   * @return a string URI pointing to the current CSV output directory, of <code>null</code>.
+   * Returns a string URI pointing to the current CSV output directory, or <code>null</code> when not undefined.
+   * @return a string URI pointing to the current CSV output directory, or <code>null</code>.
    */
   public String getOutputDirURI()
   {

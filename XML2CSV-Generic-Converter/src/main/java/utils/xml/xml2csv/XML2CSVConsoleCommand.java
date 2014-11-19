@@ -151,7 +151,7 @@ public class XML2CSVConsoleCommand
         + "," + XML2CSVLogLevel.DEBUG2.getDegree() + " or " + XML2CSVLogLevel.DEBUG3.getDegree() + ") instead of the default <" + XML2CSVLogLevel.DEBUG.getDegree() + ">.");
     System.out.println("-a or --attribute: extracts attributes as well.");
     System.out.println("-r or --raw: raw execution. Inactivates runtime optimization (a default routine which packs data before it is sent to a CSV output file).");
-    System.out.println("-x or -x{variant} --extensive{variant}: extensive optimization. Activates enhanced packing behavior. An explicit optimization variant can be provided ("
+    System.out.println("-x or -x{variant} or --extensive{variant}: extensive optimization. Activates enhanced packing behavior. An explicit optimization variant can be provided ("
         + XML2CSVOptimization.EXTENSIVE_V1.getCode() + " or " + XML2CSVOptimization.EXTENSIVE_V2.getCode() + " or " + XML2CSVOptimization.EXTENSIVE_V3.getCode()
         + ") instead of the default <" + XML2CSVOptimization.EXTENSIVE_V3.getCode() + ">.");
     System.out
@@ -452,13 +452,13 @@ public class XML2CSVConsoleCommand
       xmlInputFiles[0] = inputDirOrFile;
     }
 
-    // We choose the default optimization, if explicitly chosen.
+    // We choose the default optimization, if not explicitly chosen.
     if (level == null) level = XML2CSVOptimization.STANDARD;
 
-    // We device the output directory which, if not already known, is set to the default - that is input directory.
+    // We devise the output directory which, if not already known, is set to the default (which is the input directory).
     if (outputDir == null) outputDir = xmlInputFiles[0].getParentFile();
 
-    // We devise the field separator that will be used in the output file which, if not already known, is set to the default - that is ";".
+    // We devise the field separator that will be used in the output file which, if not already known, is set to the default (which is character ";").
     if (fieldSeparator == null) fieldSeparator = XML2CSVMisc.DEFAULT_FIELD_SEPARATOR;
 
     // We read the filter file, if any. No filter file means no filter (that is, the CSV output file will contain all XML leaf elements).
@@ -565,7 +565,7 @@ public class XML2CSVConsoleCommand
       }
     }
 
-    // XML2CSV generic generator invocation.
+    // XML2CSV generic generator invocation. Here we go.
     try
     {
       XML2CSVGenericGenerator generator = new XML2CSVGenericGenerator(singleOutputFile, outputDir, fieldSeparator, encoding, level, cutoff);
@@ -685,7 +685,7 @@ public class XML2CSVConsoleCommand
    * <li>if negative or impossible to parse as a number, deactivates cutoff by setting the actual limit to <code>-1</code>.
    * </ul>
    * @param cutoffValue the cutoff value keyed by the end user as a string, or <code>null</code>.
-   * @return <code>true</code> if a valid cutoff limit was computed from the the value keyed by the user or if the default cutoff limit was used, and <code>false</code> otherwise.
+   * @return <code>true</code> if a valid cutoff limit was computed from the value keyed by the user or if the default cutoff limit was used, and <code>false</code> otherwise.
    */
   private static boolean computeCutoff(String cutoffValue)
   {

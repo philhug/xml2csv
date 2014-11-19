@@ -64,7 +64,7 @@ class DataBuffer
   /** XML data tracking: the ordered list of tracked leaf element cardinalities in the XML input files. */
   private XML2CSVCardinality[] trackedLeafElementCardinalities = null;
 
-  /** XML data tracking: the tracked leaf element description from which all tracking information comes from. */
+  /** XML data tracking: the tracked leaf element descriptions from which tracking information comes from. */
   private ElementsDescription trackedLeafElementsDescription = null;
 
   // XML data tracking: the ordered list of tracked leaf element types in the XML input files.
@@ -628,12 +628,10 @@ class DataBuffer
           // [------][--][1]|[----------------][----------------]
           // [------][--][-]|[----------------][root.row.comment]
           // [------][--][-]|[root.row.comment][----------------]
-          // [------][--][-]|[root.row.comment][----------------]
           // [Ha Det][--][-]|[----------------][----------------]
           // [------][no][-]|[----------------][----------------]
           // [------][--][2]|[----------------][----------------]
           // [------][--][-]|[----------------][root.row.comment]
-          // [------][--][-]|[root.row.comment][----------------]
           for (int i = 0; i < trackedLeafElementXPaths.length; i++)
           {
             if (trackedParentOpening.equals(trackedLeafElementXPaths[i]))
@@ -772,8 +770,8 @@ class DataBuffer
                       // ZERO_TO_ONE/ONE_TO_ONE tracked elements downward copy, and all of the remnant candidate y lines between x+1
                       // and sup were also in that scope and received the same fields for the same reason.
                       // This shallow copy is not seen as an actual error just a borderline effect of optimization flip-flops.
-                      // Of course there is a slight possibility that it is an actual bug just like the next case but the probability
-                      // remains very low.
+                      // Of course there is a slight possibility that it is an actual bug just like the next case but the program has
+                      // been tested enough now to avert the risk for good.
                       // If this is the 1st optimization loop line y becomes empty, but if several loops have already been performed
                       // on the same buffer it might not be the case and the other fields might contain copies of previous fields.
                       // By security the rest of line y is emptied alongside.
@@ -900,8 +898,8 @@ class DataBuffer
                               // ZERO_TO_ONE/ONE_TO_ONE tracked elements downward copy, and all of the remnant candidate y lines between x+1
                               // and sup were also in that scope and received the same fields for the same reason.
                               // This shallow copy is not seen as an actual error just a borderline effect of optimization flip-flops.
-                              // Of course there is a slight possibility that it is an actual bug just like the next case but the probability
-                              // remains very low.
+                              // Of course there is a slight possibility that it is an actual bug just like the next case but the program has
+                              // been tested enough now to avert the risk for good.
                               atLeastOneExtensivePackingDone = true;
                               extensivePackingChangedBuffer = true;
                             }
@@ -1002,7 +1000,7 @@ class DataBuffer
       // Each time a tracked parent opening P is met (in column trackedLeafElementXPaths.length) the next closing index of the same kind is searched
       // (in column trackedLeafElementXPaths.length+1): one optimization sub routine is then triggered between the corresponding inf and sup indices of the buffer,
       // and all mono-occurrence (ZERO_TO_ONE or ONE_TO_ONE) tracked elements which have P as their parent are packed on the same line x (leaving a certain amount of blank
-      // lines between line x+1 and sup which are left as is because they willsilently discarded when the buffer will be echoed to the output).
+      // lines between line x+1 and sup which are left as is because they will silently discarded when the buffer will be echoed to the output).
       // If an extensive optimization is expected then:
       // - the data of line x is copied back into all non empty lines containing a field in connection with a multi-occurrence (ZERO_TO_MANY or ONE_TO_MANY) tracked element
       // which has either P as its parent or a sub element of P as its parent, plus lines containing a field in connection with a mono-occurrence (ZERO_TO_ONE or ONE_TO_ONE)

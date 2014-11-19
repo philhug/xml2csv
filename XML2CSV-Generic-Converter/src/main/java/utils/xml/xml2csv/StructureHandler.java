@@ -1554,9 +1554,9 @@ class StructureHandler extends DefaultHandler implements LexicalHandler
    * Returns a description of all the elements (leaf or intermediate) met in the structure provided as a <code>HashMap&lt;String, String[]&gt;</code> for random access where:<br>
    * <ul>
    * <li>keys are element XPaths;
-   * <li>the value associated with a key is a <code>String[3]</code> with: at index <code>0</code>, the element {@link utils.xml.xml2csv.constants.XML2CSVCardinality#getCode()
+   * <li>the value associated with a key is a <code>String[4]</code> with: at index <code>0</code>, the element {@link utils.xml.xml2csv.constants.XML2CSVCardinality#getCode()
    * cardinality code}, at index <code>1</code> the element {@link utils.xml.xml2csv.constants.XML2CSVType#getCode() type code}, at index <code>2</code> the element's occurrence
-   * count (in all the file across all element repetitions), and at index <code>3</code> the element's {@link utils.xml.xml2csv.constants.XML2CSVNature#getCode() nature code}.
+   * count (in all the file across all element repetitions) and at index <code>3</code> the element's {@link utils.xml.xml2csv.constants.XML2CSVNature#getCode() nature code}.
    * </ul>
    * @return the whole set of structure elements provided as a <code>HashMap&lt;String, String[]&gt;</code> for random XPath access.
    */
@@ -1574,9 +1574,9 @@ class StructureHandler extends DefaultHandler implements LexicalHandler
       for (int i = 0; i < props.length; i++)
         copy[i] = props[i];
       XML2CSVType type = XML2CSVType.parse(props[1]);
-      boolean attribute = false; // True it the xpath maps an attribute, and false if it is a regular element.
+      boolean attribute = false; // True if the XPath maps an attribute, and false if it is a regular element.
       if (xpath.indexOf("@") != -1) attribute = true;
-      boolean intermediate = false; // True if the xpath maps an intermediate element (with sub elements), and false if it is a leaf element.
+      boolean intermediate = false; // True if the XPath maps an intermediate element (with sub elements), and false if it is a leaf element.
       Iterator<String> iterator2 = properties.keySet().iterator();
       while (iterator2.hasNext())
       {

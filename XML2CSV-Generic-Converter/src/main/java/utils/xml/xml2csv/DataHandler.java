@@ -89,7 +89,7 @@ class DataHandler extends DefaultHandler implements LexicalHandler
   /** The chosen optimization level. */
   private XML2CSVOptimization level = null;
 
-  /** Intermediary parsing variable: records element contents alongside the parsing. */
+  /** Intermediary parsing variable: records the current element's contents alongside parsing. */
   private StringBuffer textBuffer = null;
 
   /** Ordered list of the currently parsed XML tag sequence (that is, for &lt;A&gt;&lt;B&gt;&lt;C&gt;, {A,B,C}). */
@@ -324,10 +324,10 @@ class DataHandler extends DefaultHandler implements LexicalHandler
     if (localName.contains("#")) throw new SAXException("Bad XML holding tags containing '#' characters, which are forbidden.");
     currentXMLTagSequence.add(eName);
 
-    // Root element detection
+    // Root element detection.
     if (rootTag == null) rootTag = eName;
 
-    // Current element contents buffer reset before the element is started.
+    // The buffer used to record the contents of the current element is reset before the element is started.
     textBuffer = null;
 
     // Increases the number of opened tracked element parents if it happens that the current opened element is a parent of a tracked element,
@@ -731,7 +731,7 @@ class DataHandler extends DefaultHandler implements LexicalHandler
               boolean include = false;
               String oneLeafElement = leafElementsDescription.getElementsXPaths()[j];
               if (oneLeafElement.equals(oneExpectedElementXPath)) include = true; // Element explicitly included.
-              // Any attribute of an included element is included as well, provided that attributes be expected.
+              // Any attribute of an included element is included as well, provided that attributes are expected.
               if (include == true)
               {
                 temp1.add(leafElementsDescription.getElementsXPaths()[j]);
@@ -781,7 +781,7 @@ class DataHandler extends DefaultHandler implements LexicalHandler
       XML2CSVCardinality[] trackedLeafElementCardinalities = temp4.toArray(ctemp);
       XML2CSVType[] ttemp = new XML2CSVType[temp5.size()];
       XML2CSVType[] trackedLeafElementTypes = temp5.toArray(ttemp);
-      // The tracked leaf elements are backed to the same dictionary as the leaf elements (the former being a subset of the latter).
+      // The tracked leaf elements are backed by the same dictionary as the leaf elements (the former being a subset of the latter).
       trackedLeafElementsDescription = new ElementsDescription(trackedLeafElementShortNames, trackedLeafElementXPaths, trackedLeafElementParentXPaths,
           trackedLeafElementCardinalities, trackedLeafElementTypes, leafElementsDescription.getDictionary(), leafElementsDescription.getNamespaces());
     }
@@ -913,7 +913,7 @@ class DataHandler extends DefaultHandler implements LexicalHandler
     else
     {
       attsList = attributes.get(xpath);
-      attsList.clear(); // The attributes of the currently parsed element replace any other, if any.
+      attsList.clear(); // The attributes of the currently parsed element replace any others, if any.
     }
     for (int i = 0; i < atts.getLength(); i++)
     {
