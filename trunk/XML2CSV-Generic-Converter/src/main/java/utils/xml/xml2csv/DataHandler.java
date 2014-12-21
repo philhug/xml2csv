@@ -352,7 +352,7 @@ class DataHandler extends DefaultHandler implements LexicalHandler
 
     // If attributes are expected and the current opening element has attributes then:
     // -1- if the element is a leaf element its attributes are recorded and their output is deferred until the element closing is actually met
-    // (depending on whether the element is a tracked one or not in order to have the element attributes appear after (= below) the element content;
+    // (depending on whether the element is a tracked one or not, in order to have the element attributes appear after {= below} the element content);
     // -2- if the element is not a leaf element then it cannot belong to the tracked elements (which are a subset of the leaf elements) and there
     // is no use waiting for the element closing: attributes which are tracked are immediately sent to the output.
     // The unstructured dictionary holds the leaf/intermediary information for each entry it holds but when an element pops up from nowhere in a file

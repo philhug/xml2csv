@@ -108,11 +108,11 @@
 				<lib2:Duration TimeUnit="YEAR">4</lib2:Duration>
 				<lib2:Rate>5</lib2:Rate>
 			</lib2:Data>
-			<lib2:Installment>
+			<lib2:Instalment>
 				<lib2:BalanceAmount Curr="EUR">9000.00</lib2:BalanceAmount>
-				<lib2:InstallmentAmount Curr="EUR">900.00</lib2:InstallmentAmount>
+				<lib2:InstalmentAmount Curr="EUR">900.00</lib2:InstalmentAmount>
 				<lib2:CalculationDate>2014-04-19</lib2:CalculationDate>
-			</lib2:Installment>
+			</lib2:Instalment>
 		</Line>
 		<Context>
 			<lib2:Origin>NP123</lib2:Origin>
@@ -199,11 +199,11 @@
 				<lib2:Duration TimeUnit="YEAR">6</lib2:Duration>
 				<lib2:Rate>2</lib2:Rate>
 			</lib2:Data>
-			<lib2:Installment>
+			<lib2:Instalment>
 				<lib2:BalanceAmount Curr="EUR">4000.00</lib2:BalanceAmount>
-				<lib2:InstallmentAmount Curr="EUR">300.00</lib2:InstallmentAmount>
+				<lib2:InstalmentAmount Curr="EUR">300.00</lib2:InstalmentAmount>
 				<lib2:CalculationDate>2014-04-20</lib2:CalculationDate>
-			</lib2:Installment>
+			</lib2:Instalment>
 		</Line>
 		<Context>
 			<lib2:Origin>NP123</lib2:Origin>

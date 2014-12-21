@@ -1076,10 +1076,10 @@ class StructureHandler extends DefaultHandler implements LexicalHandler
     else
     {
       // Intermediate graph element reached.
-      // Because we deal with leaf elements only an intermediate element is skipped but if the element has attributes, they are added to the list like if the were leaf elements.
+      // Because we deal with leaf elements only an intermediate element is skipped but if the element has attributes, they are added to the list like if they were leaf elements.
       // Exception: a mixture element (both intermediate and leaf) should be treated as a leaf element. A mixture element has an actual element type (something which might happen
       // only if the element has a content) but contains also sub elements.
-      if (currentXpath.isEmpty() == false) // Edge effect at the beginning of the graph analysis (which starts with an empty XPath, obviously absent from the property list.
+      if (currentXpath.isEmpty() == false) // Edge effect at the beginning of the graph analysis (which starts with an empty XPath, obviously absent from the property list).
       {
         String[] props = properties.get(currentXpath);
         XML2CSVType type = XML2CSVType.parse(props[1]);
@@ -1357,7 +1357,7 @@ class StructureHandler extends DefaultHandler implements LexicalHandler
   public String getLeafElementXPath(int i)
   {
     String result = null;
-    if ((i >= 0) && (i < flatLeafElementXPathList.size())) result = flatLeafElementXPathList.get(i); // Example: Root.Row.Amount (element) or Root.Row.Amount@Currency (attribute)
+    if ((i >= 0) && (i < flatLeafElementXPathList.size())) result = flatLeafElementXPathList.get(i); // Example: Root.Row.Amount (element) or Root.Row.Amount@Currency (attribute).
     return result;
   }
 
@@ -1369,7 +1369,7 @@ class StructureHandler extends DefaultHandler implements LexicalHandler
   public String getLeafElementParentXPath(int i)
   {
     String result = null;
-    if ((i >= 0) && (i < flatLeafElementXPathList.size())) result = flatLeafElementXPathList.get(i); // Example: Root.Row.Amount (element) or Root.Row.Amount@Currency (attribute)
+    if ((i >= 0) && (i < flatLeafElementXPathList.size())) result = flatLeafElementXPathList.get(i); // Example: Root.Row.Amount (element) or Root.Row.Amount@Currency (attribute).
     int j = result.lastIndexOf("@");
     if (j != -1) result = result.substring(0, j); // The parent of an element's attribute is the element itself.
     else
@@ -1377,7 +1377,7 @@ class StructureHandler extends DefaultHandler implements LexicalHandler
       j = result.lastIndexOf(".");
       if (j == -1) result = null; // The i-th element was the root element (Example: Root), which has no parent.
       else
-        result = result.substring(0, j); // Parent of a regular element. Example: Root.Row
+        result = result.substring(0, j); // Parent of a regular element. Example: Root.Row.
     }
     return result;
   }
@@ -1390,13 +1390,13 @@ class StructureHandler extends DefaultHandler implements LexicalHandler
   public String getLeafElementShortName(int i)
   {
     String result = null;
-    if ((i >= 0) && (i < flatLeafElementXPathList.size())) result = flatLeafElementXPathList.get(i); // Example: Root.Row.Amount (element) or Root.Row.Amount@Currency (attribute)
+    if ((i >= 0) && (i < flatLeafElementXPathList.size())) result = flatLeafElementXPathList.get(i); // Example: Root.Row.Amount (element) or Root.Row.Amount@Currency (attribute).
     int j = result.lastIndexOf("@");
     if (j != -1) result = result.substring(j + 1); // The short name of an element attribute is the attribute name itself.
     else
     {
       j = result.lastIndexOf(".");
-      if (j != -1) result = result.substring(j + 1); // Short name of a regular element. Example: Amount
+      if (j != -1) result = result.substring(j + 1); // Short name of a regular element. Example: Amount.
     }
     return result;
   }
@@ -1410,7 +1410,7 @@ class StructureHandler extends DefaultHandler implements LexicalHandler
   {
     XML2CSVCardinality result = null;
     String xpath = null;
-    if ((i >= 0) && (i < flatLeafElementXPathList.size())) xpath = flatLeafElementXPathList.get(i); // Example: Root.Row.Amount (element) or Root.Row.Amount@Currency (attribute)
+    if ((i >= 0) && (i < flatLeafElementXPathList.size())) xpath = flatLeafElementXPathList.get(i); // Example: Root.Row.Amount (element) or Root.Row.Amount@Currency (attribute).
     if (xpath != null)
     {
       int j = xpath.lastIndexOf("@");
@@ -1450,7 +1450,7 @@ class StructureHandler extends DefaultHandler implements LexicalHandler
   {
     XML2CSVType result = null;
     String xpath = null;
-    if ((i >= 0) && (i < flatLeafElementXPathList.size())) xpath = flatLeafElementXPathList.get(i); // Example: Root.Row.Amount (element) or Root.Row.Amount@Currency (attribute)
+    if ((i >= 0) && (i < flatLeafElementXPathList.size())) xpath = flatLeafElementXPathList.get(i); // Example: Root.Row.Amount (element) or Root.Row.Amount@Currency (attribute).
     if (xpath != null)
     {
       int j = xpath.lastIndexOf("@");

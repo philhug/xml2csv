@@ -102,6 +102,7 @@
 					<include>**/*.zip</include>
 					<include>**/*.csv</include>
 					<include>**/*.xml</include>
+					<include>**/*.txt</include>
 					<include>**/*.odt</include>
 					<include>**/*.pdf</include>
 				</includes>

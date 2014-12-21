@@ -11,10 +11,10 @@ Data grouping might be performed alongside parsing in order to merge closely rel
 single elements on the same line (--> 'standard' optimization), which, in turn, might be
 merged back with all related repeated elements (--> 'extensive variant 1' optimization).
 The 'extensive variant 2' optimization flavor, which uses a slightly different approach
-with its own advanced grouping/merge strategy, might produce better results with XML
+with its own advanced grouping/merging strategy, might produce better results with XML
 files bearing many mono-occurrence elements.
 The last 'extensive variant 3' optimization flavor maximizes 'extensive variant 2's
-grouping/merge capabilities (by introducing virtual mono-occurrence elements).
+grouping/merging capabilities (by introducing virtual mono-occurrence elements).
 
 The program performs 'standard' optimization with the default settings, which is quite
 the best compromise in my opinion because:
