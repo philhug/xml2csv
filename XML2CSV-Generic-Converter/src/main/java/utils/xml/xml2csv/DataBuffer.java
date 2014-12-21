@@ -1208,7 +1208,7 @@ class DataBuffer
                             else
                             {
                               // Nasty bug. The destination fields should be empty (we deal with copy of mono-occurrence fields
-                              // in multi-occurrence lines in separate columns. We raise an exception in order to avoid hazardous behavior.
+                              // in multi-occurrence lines in separate columns). We raise an exception in order to avoid hazardous behavior.
                               throw new SAXException("Optimization bug. Mono/multi-occurrence fields collision during <" + trackedParentOpening
                                   + ">-based extensive optimization loop.");
                             }

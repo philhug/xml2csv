@@ -179,7 +179,7 @@ class ElementsDescription
       if (((subXPath.lastIndexOf('.') == 0) && (subXPath.lastIndexOf('@') == -1)) || ((subXPath.lastIndexOf('.') == -1) && (subXPath.lastIndexOf('@') == 0)))
       {
         // xpath2 is a direct child of xpath1.
-        // For instance: if xpath1 = one.two.three and xpath2 = one.two.three.four then subXPath = .four only a '.' at index 0.
+        // For instance: if xpath1 = one.two.three and xpath2 = one.two.three.four then subXPath = .four (only a '.' at index 0).
         // We leave the subset result non null, but empty.
       }
       else
