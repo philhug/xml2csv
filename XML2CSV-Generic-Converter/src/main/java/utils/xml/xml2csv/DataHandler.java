@@ -246,9 +246,7 @@ class DataHandler extends DefaultHandler implements LexicalHandler
           sb.append("column <");
           sb.append(i);
           sb.append(">=[");
-          sb.append(trackedLeafElementsDescription.getElementsParentXPaths()[i]);
-          sb.append(".");
-          sb.append(trackedLeafElementsDescription.getElementsShortNames()[i]);
+          sb.append(trackedLeafElementsDescription.getElementsXPaths()[i]);
           sb.append("|");
           sb.append(trackedLeafElementsDescription.getElementsCardinalities()[i]);
           sb.append("|");
