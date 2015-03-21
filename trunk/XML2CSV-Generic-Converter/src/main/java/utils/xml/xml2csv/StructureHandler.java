@@ -414,18 +414,26 @@ class StructureHandler extends DefaultHandler implements LexicalHandler
 
   /**
    * Takes the XPath tag sequence of the currently parsed XML element and initializes the element properties if they don't exist yet.<br>
-   * Default element properties are: <code>XML2CSVCardinality.ONE_TO_ONE</code> (mandatory single element), <code>XML2CSVType.UNKNOWN</code>, and <code>0</code> global occurrence
-   * count.
+   * Default element properties are: <code>XML2CSVCardinality.ONE_TO_ONE</code> (mandatory single element) or <code>XML2CSVCardinality.ZERO_TO_ONE</code> (optional single element)
+   * depending on whether or not the parent element was met before, <code>XML2CSVType.UNKNOWN</code>, and <code>0</code> global occurrence count.
    */
   private void updateProperties()
   {
     String xpath = getXPathAsString(currentXMLTagSequence);
 
+    // The parent element of the currently parsed XML element has been processed before unless the current element is the root element (which happens to have no parent).
+    // As a result, parentProps always exists unless we are dealing with the root element.
+    String[] parentProps = properties.get(getParentXPathAsString(currentXMLTagSequence));
+
     if (properties.containsKey(xpath) == false)
     {
       String[] props = new String[3];
-      // By default, a new element is supposed mandatory and mono-occurrence and might be set to optional and/or unbounded later on.
-      props[0] = XML2CSVCardinality.ONE_TO_ONE.getCode();
+      // A new element gets a default mono-occurrence cardinality (which might be changed for an unbounded one later on).
+      // It is expected to be mandatory too (something which might change later on) unless its optional nature is already disclosed
+      // (technically: unless its own parent has already been met before).
+      if ((parentProps != null) && (Long.parseLong(parentProps[2]) > 0)) props[0] = XML2CSVCardinality.ZERO_TO_ONE.getCode();
+      else
+        props[0] = XML2CSVCardinality.ONE_TO_ONE.getCode();
       // By default, a new element is of UNKNOWN type, which will be narrowed later on for something more accurate for a leaf element.
       props[1] = XML2CSVType.UNKNOWN.getCode();
       // The global element occurrence count is initialized to 0 for a new element and will be incremented by 1 for each occurrence in the template file when the element is closed.
@@ -539,13 +547,13 @@ class StructureHandler extends DefaultHandler implements LexicalHandler
    * otherwise.<br>
    * Recursive method.
    * @param initialXPath the initial XPath associated with the starting graph part.
-   * @param currentXpath the current XPath associated with the graph part.
+   * @param currentXPath the current XPath associated with the graph part.
    * @param currentGraph the current graph part to explore.
    * @return <code>true</code> if all the descendant elements of the initial XPath are not repeated "<i>enough</i>" and <code>false</code> otherwise.
    * @throws SAXException in case of error.
    */
   @SuppressWarnings("unchecked")
-  private boolean examineChildrenRepetition(String initialXPath, String currentXpath, LinkedHashMap<String, Object> currentGraph) throws SAXException
+  private boolean examineChildrenRepetition(String initialXPath, String currentXPath, LinkedHashMap<String, Object> currentGraph) throws SAXException
   {
     boolean result = true;
     Set<String> keySet = currentGraph.keySet();
@@ -556,14 +564,14 @@ class StructureHandler extends DefaultHandler implements LexicalHandler
     else
     {
       // Intermediate graph element reached.
-      String[] props = properties.get(currentXpath);
+      String[] props = properties.get(currentXPath);
       if (props != null)
       {
         // If the element is repeated "enough" it is added to the candidate list.
         long globalElementCount = Long.parseLong(props[2]);
         if (globalElementCount >= XML2CSVMisc.ELEMENT_REPETITION_THRESHOLD)
         {
-          XML2CSVLoggingFacade.log(XML2CSVLogLevel.DEBUG2, "examineChildrenRepetition: element <" + currentXpath + "> prevents its ancestor <" + initialXPath
+          XML2CSVLoggingFacade.log(XML2CSVLogLevel.DEBUG2, "examineChildrenRepetition: element <" + currentXPath + "> prevents its ancestor <" + initialXPath
               + "> from being a secondary candidate for optimization maximization.");
           result = false;
         }
@@ -574,7 +582,7 @@ class StructureHandler extends DefaultHandler implements LexicalHandler
           {
             String node = iterator.next();
             String nextXpath = null;
-            if (!currentXpath.equals(XML2CSVMisc.EMPTY_STRING)) nextXpath = currentXpath + "." + node;
+            if (!currentXPath.equals(XML2CSVMisc.EMPTY_STRING)) nextXpath = currentXPath + "." + node;
             else
               nextXpath = node;
             LinkedHashMap<String, Object> nextGraph = (LinkedHashMap<String, Object>) currentGraph.get(node);
@@ -585,7 +593,7 @@ class StructureHandler extends DefaultHandler implements LexicalHandler
       else
       {
         // Cannot happen unless there is a bug somewhere => SAXException raised immediately in order to abort everything.
-        throw new SAXException("Internal parsing failure. Missing properties for element <" + currentXpath + ">. Location: method <examineChildren> #1");
+        throw new SAXException("Internal parsing failure. Missing properties for element <" + currentXPath + ">. Location: method <examineChildren> #1");
       }
     }
     return result;
@@ -1370,14 +1378,17 @@ class StructureHandler extends DefaultHandler implements LexicalHandler
   {
     String result = null;
     if ((i >= 0) && (i < flatLeafElementXPathList.size())) result = flatLeafElementXPathList.get(i); // Example: Root.Row.Amount (element) or Root.Row.Amount@Currency (attribute).
-    int j = result.lastIndexOf("@");
-    if (j != -1) result = result.substring(0, j); // The parent of an element's attribute is the element itself.
-    else
+    if (result != null)
     {
-      j = result.lastIndexOf(".");
-      if (j == -1) result = null; // The i-th element was the root element (Example: Root), which has no parent.
+      int j = result.lastIndexOf("@");
+      if (j != -1) result = result.substring(0, j); // The parent of an element's attribute is the element itself.
       else
-        result = result.substring(0, j); // Parent of a regular element. Example: Root.Row.
+      {
+        j = result.lastIndexOf(".");
+        if (j == -1) result = null; // The i-th element was the root element (Example: Root), which has no parent.
+        else
+          result = result.substring(0, j); // Parent of a regular element. Example: Root.Row.
+      }
     }
     return result;
   }
@@ -1391,12 +1402,15 @@ class StructureHandler extends DefaultHandler implements LexicalHandler
   {
     String result = null;
     if ((i >= 0) && (i < flatLeafElementXPathList.size())) result = flatLeafElementXPathList.get(i); // Example: Root.Row.Amount (element) or Root.Row.Amount@Currency (attribute).
-    int j = result.lastIndexOf("@");
-    if (j != -1) result = result.substring(j + 1); // The short name of an element attribute is the attribute name itself.
-    else
+    if (result != null)
     {
-      j = result.lastIndexOf(".");
-      if (j != -1) result = result.substring(j + 1); // Short name of a regular element. Example: Amount.
+      int j = result.lastIndexOf("@");
+      if (j != -1) result = result.substring(j + 1); // The short name of an element attribute is the attribute name itself.
+      else
+      {
+        j = result.lastIndexOf(".");
+        if (j != -1) result = result.substring(j + 1); // Short name of a regular element. Example: Amount.
+      }
     }
     return result;
   }

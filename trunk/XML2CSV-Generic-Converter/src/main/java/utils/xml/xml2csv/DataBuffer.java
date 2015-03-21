@@ -162,9 +162,10 @@ class DataBuffer
   }
 
   /**
-   * Displays the current buffer content (for debug purpose).
+   * Displays the current buffer content.
+   * @param level the log level on behalf of which the display is done.
    */
-  private void displayBufferContent()
+  private void displayBufferContent(XML2CSVLogLevel level)
   {
     // Computes the per-column max data lengths for a nice display.
     int[] maxLengths = new int[trackedLeafElementXPaths.length + 2];
@@ -178,9 +179,9 @@ class DataBuffer
         if ((line[j] != null) && (line[j].length() > maxLengths[j])) maxLengths[j] = line[j].length();
       }
     }
-    // Displays each buffer line to the console.
+    // Displays each buffer line.
     String debugLine = buildDebugBufferLine(-1, maxLengths);
-    XML2CSVLoggingFacade.log(XML2CSVLogLevel.DEBUG, "\t            " + debugLine);
+    XML2CSVLoggingFacade.log(level, "\t            " + debugLine);
     for (int i = 0; i < buffer.size(); i++)
     {
       debugLine = buildDebugBufferLine(i, maxLengths);
@@ -192,7 +193,7 @@ class DataBuffer
       formattedDebugLine.append(Integer.toString(i));
       formattedDebugLine.append(">: ");
       formattedDebugLine.append(debugLine);
-      XML2CSVLoggingFacade.log(XML2CSVLogLevel.DEBUG, XML2CSVMisc.DISPLAY_CLASS_NAME, formattedDebugLine.toString());
+      XML2CSVLoggingFacade.log(level, XML2CSVMisc.DISPLAY_CLASS_NAME, formattedDebugLine.toString());
     }
   }
 
@@ -429,7 +430,7 @@ class DataBuffer
     // Because Root.Row.Other is repeated those virtual attributes won't be moved "upwards" during EXTENSIVE_V3 packing of Root.Row but the corresponding lines
     // will receive downward copy of "IE" and "Sample" and, even if the actual virtual attributes are never displayed, will display 2 extra pointless lines
     // in the output file.
-    // A buffer cleaning deletes the 2 virtual attributes values before they get a chance to become annoying.
+    // A buffer cleaning deletes the 2 virtual attribute values before they get a chance to become annoying.
     // <Root><Row country="IE">
     // <Name>Sample</Name>
     // <Data idx="123"><Date>2014-03-21</Date></Data>
@@ -438,8 +439,8 @@ class DataBuffer
     // </Row></Root>
     if (XML2CSVLoggingFacade.DEBUG_MODE == true)
     {
-      XML2CSVLoggingFacade.log(XML2CSVLogLevel.DEBUG3, "<" + buffer.size() + "> lines in buffer before raw buffer cleaning. Original content:");
-      displayBufferContent();
+      XML2CSVLoggingFacade.log(XML2CSVLogLevel.DEBUG2, "<" + buffer.size() + "> lines in buffer before raw buffer cleaning. Original content:");
+      displayBufferContent(XML2CSVLogLevel.DEBUG2);
     }
     // Step 1: the list of tracked elements without actual data is devised from the raw data buffer. XPaths of parent blocks without data are collected.
     // Virtual attribute values are not seen as actual data.
@@ -491,7 +492,7 @@ class DataBuffer
     {
       String[] line = buffer.get(i);
       int indexOfVirtualValue = -1;
-      for (int j = 0; j < line.length - 2; j++) // The last two columns of each line are dedicated to parent opening & closing tracking.
+      for (int j = 0; j < line.length - 2; j++) // The last two columns of each line are dedicated to the tracking of parent opening & closing.
       {
         if ((line[j] != null) && ((line[j].equals(XML2CSVMisc.VIRTUAL_ATTRIBUTE))))
         {
@@ -504,7 +505,7 @@ class DataBuffer
         String virtualAttributeXPath = trackedLeafElementXPaths[indexOfVirtualValue];
         if (virtualAttributeXPath.endsWith(XML2CSVMisc.VIRTUAL_ATTRIBUTE))
         {
-          // OK. This is a real virtual attribute associated with a virtual attribute XPath.
+          // OK. This is a real virtual attribute (no kidding!) associated with a virtual attribute XPath.
           String elementXPath = virtualAttributeXPath.substring(0, virtualAttributeXPath.indexOf("@"));
           if (datalessXPaths.containsKey(elementXPath))
           {
@@ -531,12 +532,12 @@ class DataBuffer
     {
       if (XML2CSVLoggingFacade.DEBUG_MODE == true)
       {
-        XML2CSVLoggingFacade.log(XML2CSVLogLevel.DEBUG3, "<" + buffer.size() + "> lines in buffer after raw buffer cleaning. Final content:");
-        displayBufferContent();
+        XML2CSVLoggingFacade.log(XML2CSVLogLevel.DEBUG2, "<" + buffer.size() + "> lines in buffer after raw buffer cleaning. Final content:");
+        displayBufferContent(XML2CSVLogLevel.DEBUG2);
       }
     }
     else
-      XML2CSVLoggingFacade.log(XML2CSVLogLevel.DEBUG3, "buffer left unchanged after cleaning.");
+      XML2CSVLoggingFacade.log(XML2CSVLogLevel.DEBUG2, "buffer left unchanged after cleaning.");
   }
 
   /**
@@ -563,7 +564,7 @@ class DataBuffer
       if (XML2CSVLoggingFacade.DEBUG_MODE == true)
       {
         XML2CSVLoggingFacade.log(XML2CSVLogLevel.DEBUG, "<" + buffer.size() + "> lines in buffer before optimization. Original content:");
-        displayBufferContent();
+        displayBufferContent(XML2CSVLogLevel.DEBUG);
       }
       // The main loop moves through the buffer from the beginning to the end (the inf index is incremented accordingly).
       // Each time a tracked parent opening P is met (in column trackedLeafElementXPaths.length) the next closing index of the same kind is searched
@@ -906,7 +907,7 @@ class DataBuffer
                             else
                             {
                               // Nasty bug. The destination fields should be empty (we deal with copy of mono-occurrence fields
-                              // in multi-occurrence lines in separate columns. We raise an exception in order to avoid hazardous behavior.
+                              // in multi-occurrence lines in separate columns). We raise an exception in order to avoid hazardous behavior.
                               throw new SAXException("Optimization bug. Mono/multi-occurrence fields collision during <" + trackedParentOpening + ">[<" + x + ">-<" + y + ">-<"
                                   + oneSelectedColumnIndex + ">-<" + j + ">]-based extensive optimization loop.");
                             }
@@ -944,7 +945,7 @@ class DataBuffer
                   XML2CSVLoggingFacade.log(XML2CSVLogLevel.DEBUG, "<" + buffer.size() + "> lines in buffer after <" + trackedParentOpening
                       + ">-based enhanced standard optimization loop. Intermediary buffer content: ");
                 }
-                if ((packingChangedBuffer == true) || (extensivePackingChangedBuffer == true)) displayBufferContent();
+                if ((packingChangedBuffer == true) || (extensivePackingChangedBuffer == true)) displayBufferContent(XML2CSVLogLevel.DEBUG);
               }
             }
             else
@@ -961,7 +962,7 @@ class DataBuffer
         if ((atLeastOneStandardPackDone == true) || (atLeastOneExtensivePackingDone == true))
         {
           XML2CSVLoggingFacade.log(XML2CSVLogLevel.DEBUG, "<" + buffer.size() + "> lines in buffer after optimization. Final content:");
-          displayBufferContent();
+          displayBufferContent(XML2CSVLogLevel.DEBUG);
         }
         else
           XML2CSVLoggingFacade.log(XML2CSVLogLevel.DEBUG, "buffer left unchanged after optimization.");
@@ -994,7 +995,7 @@ class DataBuffer
       if (XML2CSVLoggingFacade.DEBUG_MODE == true)
       {
         XML2CSVLoggingFacade.log(XML2CSVLogLevel.DEBUG, "<" + buffer.size() + "> lines in buffer before optimization. Original content:");
-        displayBufferContent();
+        displayBufferContent(XML2CSVLogLevel.DEBUG);
       }
       // The main loop moves through the buffer from the beginning to the end (the inf index is incremented accordingly).
       // Each time a tracked parent opening P is met (in column trackedLeafElementXPaths.length) the next closing index of the same kind is searched
@@ -1247,7 +1248,7 @@ class DataBuffer
                   XML2CSVLoggingFacade.log(XML2CSVLogLevel.DEBUG, "<" + buffer.size() + "> lines in buffer after one <" + trackedParentOpening
                       + ">-based standard optimization loop. Intermediary buffer content: ");
                 }
-                if ((standardPackingChangedBuffer == true) || (extensivePackingChangedBuffer == true)) displayBufferContent();
+                if ((standardPackingChangedBuffer == true) || (extensivePackingChangedBuffer == true)) displayBufferContent(XML2CSVLogLevel.DEBUG);
               }
             }
             else
@@ -1264,7 +1265,7 @@ class DataBuffer
         if ((atLeastOneStandardPackDone == true) || (atLeastOneExtensivePackingDone == true))
         {
           XML2CSVLoggingFacade.log(XML2CSVLogLevel.DEBUG, "<" + buffer.size() + "> lines in buffer after optimization. Final content:");
-          displayBufferContent();
+          displayBufferContent(XML2CSVLogLevel.DEBUG);
         }
         else
           XML2CSVLoggingFacade.log(XML2CSVLogLevel.DEBUG, "buffer left unchanged after optimization.");
