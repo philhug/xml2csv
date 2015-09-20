@@ -36,8 +36,8 @@ import org.xml.sax.SAXException;
  * The class records the opening/closing of the parents of tracked XML elements as well (see methods {@link utils.xml.xml2csv.DataBuffer#recordTrackedParentOpening(String)
  * recordTrackedParentOpening} and {@link utils.xml.xml2csv.DataBuffer#recordTrackedParentClosing(String) recordTrackedParentClosing}).<br>
  * One new line is added to the buffer for each parent reference too.<br>
- * When the buffer is complete and consistent (devised from <i><u>outside</u></i> the class) two special {@link utils.xml.xml2csv.DataBuffer#optimizeV1() optimizationV1} and
- * {@link utils.xml.xml2csv.DataBuffer#optimizeV23() optimizationV23} methods make it possible to have data packed depending on the chosen optimization
+ * When the buffer is complete and consistent (devised from <i><u>outside</u></i> the class) two special methods {@link utils.xml.xml2csv.DataBuffer#optimizeV1() optimizationV1}
+ * and {@link utils.xml.xml2csv.DataBuffer#optimizeV23() optimizationV23} make it possible to have data packed depending on the chosen optimization
  * {@link utils.xml.xml2csv.constants.XML2CSVOptimization flavor}.<br>
  * One final {@link utils.xml.xml2csv.DataBuffer#flush() flush} method makes it possible to send the buffer data to the expected CSV output file through
  * the CSV output writer {@link utils.xml.xml2csv.OutputWriterFacade facade} object provided to the class instance constructor.<br>
@@ -546,7 +546,7 @@ class DataBuffer
    * {@link utils.xml.xml2csv.constants.XML2CSVOptimization#EXTENSIVE_V3 EXTENSIVE_V3} optimizations, based on the identical algorithm variant of both <code>STANDARD</code> and
    * <code>EXTENSIVE_V1</code> optimizations.<br>
    * The difference between <code>EXTENSIVE_V2</code> and <code>EXTENSIVE_V3</code> optimizations concerns virtual attributes which do not exist in <code>EXTENSIVE_V2</code> mode
-   * and are added alongside parsing in <code>EXTENSIVE_V3</code> mode in order to act as hidden aggregation catalysts (hidden becuse they are explicitly excluded from the output).
+   * and are added alongside parsing in <code>EXTENSIVE_V3</code> mode in order to act as hidden aggregation catalysts (hidden because they are explicitly excluded from the output).
    * Optimization ends when the last buffer line subset has been processed (when the last line block enclosed by tracked element's parent opening/closing has been performed).
    * @return <code>true</code> if the optimization changed something in the buffer.
    * @throws SAXException in case of error.
@@ -756,7 +756,7 @@ class DataBuffer
                       // OK: the destination field in line x is empty as expected. Time to move the field content from line y to line x.
                       // If this is the 1st optimization loop line y becomes empty, but if several loops have already been performed
                       // on the same buffer it might not be the case and the other fields might contain copies of previous fields.
-                      // By security the rest of line y is emptied alongside.
+                      // For safety considerations the rest of line y is emptied alongside.
                       buffer.get(x)[oneSelectedColumnIndex] = buffer.get(y)[oneSelectedColumnIndex];
                       buffer.get(y)[oneSelectedColumnIndex] = null;
                       for (int k = 0; k < trackedLeafElementXPaths.length; k++)
@@ -775,7 +775,7 @@ class DataBuffer
                       // been tested enough now to avert the risk for good.
                       // If this is the 1st optimization loop line y becomes empty, but if several loops have already been performed
                       // on the same buffer it might not be the case and the other fields might contain copies of previous fields.
-                      // By security the rest of line y is emptied alongside.
+                      // For safety considerations the rest of line y is emptied alongside.
                       buffer.get(y)[oneSelectedColumnIndex] = null;
                       for (int k = 0; k < trackedLeafElementXPaths.length; k++)
                         buffer.get(y)[k] = null;
@@ -1097,7 +1097,7 @@ class DataBuffer
                       // OK: the destination field in line x is empty as expected. Time to move the field content from line y to line x.
                       // If this is the 1st optimization loop line y becomes empty, but if several loops have already been performed
                       // on the same buffer it might not be the case and the other fields might contain copies of previous fields.
-                      // By security the rest of line y is emptied alongside.
+                      // For safety considerations the rest of line y is emptied alongside.
                       buffer.get(x)[oneSelectedColumnIndex] = buffer.get(y)[oneSelectedColumnIndex];
                       buffer.get(y)[oneSelectedColumnIndex] = null;
                       for (int k = 0; k < trackedLeafElementXPaths.length; k++)
@@ -1116,7 +1116,8 @@ class DataBuffer
                       // tested program odds remain in our favor.
                       // If this is the 1st optimization loop line y becomes empty when field at index oneSelectedColumnIndex is set
                       // to null, but if several loops have already been performed on the same buffer it might not be the case and the
-                      // other fields might contain copies of previous fields. By security the rest of line y is emptied alongside.
+                      // other fields might contain copies of previous fields. For safety considerations the rest of line y is emptied
+                      // alongside.
                       buffer.get(y)[oneSelectedColumnIndex] = null;
                       for (int k = 0; k < trackedLeafElementXPaths.length; k++)
                         buffer.get(y)[k] = null;

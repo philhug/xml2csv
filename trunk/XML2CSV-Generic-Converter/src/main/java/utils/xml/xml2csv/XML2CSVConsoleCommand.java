@@ -142,7 +142,7 @@ public class XML2CSVConsoleCommand
   {
     System.out.println(XML2CSVMisc.DISPLAY_CLASS_NAME);
     System.out
-        .println("Usage: java utils.xml.xml2csv.XML2CSVConsoleCommand [-h] [-m] [-v] [-d[{degree}]] [-a] [-r] [-x[{variant}]] -i {input dir/file} [-t {template filename}] [-o {output dir}] [-b[{blend filename}]] [-e {output encoding}] [-s {output separator}]  [-p {+ filter file}] [-n {- filter file}] [-l[{log4J config}]] [-c{limit}] [-w] [-u]");
+        .println("Usage: java utils.xml.xml2csv.XML2CSVConsoleCommand [-h] [-m] [-v] [-d[{degree}]] [-a] [-r] [-x[{variant}]] -i {input dir/file} [-t {template filename}] [-o {output dir}] [-b[{blend filename}]] [-e {output encoding}] [-s {output separator}]  [-p {+ filter file}] [-n {- filter file}] [-l[{log4J config}]] [-c[{limit}]] [-w] [-u]");
     System.out.println("with:");
     System.out.println("-h or --help: displays this help text, then aborts the program.");
     System.out.println("-m or --mute: mutes the program. In this mode nothing is displayed at runtime. Useful for batch integration where the return code alone matters.");
