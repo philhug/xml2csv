@@ -251,7 +251,7 @@ class StructureHandler extends DefaultHandler implements LexicalHandler
     updateProperties();
 
     // Records the element attributes if any and if expected, with appropriate tag properties.
-    if ((withAttributes == true) && (atts != null) && (atts.getLength() != 0)) updateAttributeProperties(atts);
+    if (withAttributes == true) updateAttributeProperties(atts);
 
     // Root element detection.
     if (rootTag == null) rootTag = eName;
@@ -288,7 +288,7 @@ class StructureHandler extends DefaultHandler implements LexicalHandler
   @Override
   public void characters(char buf[], int offset, int len) throws SAXException
   {
-    // Current element contents, or garbage characters (such as blanks) between regular tag.
+    // Current element contents, or garbage characters (such as blanks) between regular tags.
     // This handler is interested in the XML structure only and element contents are read in order to guess the element type.
     String s = new String(buf, offset, len);
     if (textBuffer == null) textBuffer = new StringBuffer(s);
@@ -657,83 +657,110 @@ class StructureHandler extends DefaultHandler implements LexicalHandler
   {
     String xpath = getXPathAsString(currentXMLTagSequence);
 
-    if (attributes.containsKey(xpath) == false)
+    if ((atts == null) || (atts.getLength() == 0))
     {
-      // It's the first time the currently parsed element got attributes.
-      ArrayList<String[]> attsList = new ArrayList<String[]>();
-      for (int i = 0; i < atts.getLength(); i++)
+      // The current element has no attribute.
+      if (attributes.containsKey(xpath) == false)
       {
-        String[] att = new String[3];
-        att[0] = atts.getLocalName(i);
-        // By default, a new attribute is supposed mandatory and mono-occurrence and might be set to optional later on.
-        att[1] = XML2CSVCardinality.ONE_TO_ONE.getCode();
-        // The type of the new attribute is guessed from its value.
-        att[2] = checkType(atts.getValue(i), typeSniffer(atts.getValue(i))).getCode();
-        attsList.add(att);
+        // It's the first time we meet the element. We create an empty attribute list which will come in handy later on for minimal cardinality computation if the element is ever
+        // met again, this time with attributes (an attribute added to an existing list will be provided a ZERO_TO_ONE cardinality while an attribute added to a newly created list
+        // will be provided a ONE_TO_ONE cardinality).
+        ArrayList<String[]> attsList = new ArrayList<String[]>();
+        attributes.put(xpath, attsList);
       }
-      attributes.put(xpath, attsList);
+      else
+      {
+        // It's not the first time we meet the element because the element's attribute list exists already.
+        // All the attributes in that list should be marked as optional if not already (because the current element has no attribute).
+        ArrayList<String[]> attsList = attributes.get(xpath);
+        for (int j = 0; j < attsList.size(); j++)
+        {
+          String[] att = attsList.get(j);
+          if (att[1] == XML2CSVCardinality.ONE_TO_ONE.getCode()) att[1] = XML2CSVCardinality.ZERO_TO_ONE.getCode();
+        }
+      }
     }
     else
     {
-      // We have already met attributes for the currently parsed element. It has already an attribute definition list, which we examine now.
-      ArrayList<String[]> attsList = attributes.get(xpath);
-      int idxOfPrevAtt = -1; // Helps to insert a new attribute at its correct place in the list.
-      for (int i = 0; i < atts.getLength(); i++)
+      // The current element has at least one attribute.
+      if (attributes.containsKey(xpath) == false)
       {
-        // We look for the attribute in the list associated with the element.
-        String attName = atts.getLocalName(i);
-        int idxOfAtt = -1;
-        for (int j = 0; j < attsList.size(); j++)
+        // It's the first time the element is met, and it has attributes.
+        ArrayList<String[]> attsList = new ArrayList<String[]>();
+        for (int i = 0; i < atts.getLength(); i++)
         {
-          if (attsList.get(j)[0].equals(attName))
-          {
-            idxOfAtt = j;
-            break;
-          }
-        }
-        if (idxOfAtt != -1)
-        {
-          // The type of the attribute is updated appropriately.
-          String[] att = attsList.get(idxOfAtt);
-          att[2] = checkType(atts.getValue(i), XML2CSVType.parse(att[2])).getCode();
-          attsList.set(idxOfAtt, att);
-          // All the attributes between idxOfPrevAtt and idxOfAtt, if any, were not provided for the current element occurrence and should be set to optional.
-          for (int k = idxOfPrevAtt + 1; k < idxOfAtt; k++)
-          {
-            String[] oneAtt = attsList.get(k);
-            oneAtt[1] = XML2CSVCardinality.ZERO_TO_ONE.getCode();
-            attsList.set(k, oneAtt);
-          }
-          // The value of idxOfPrevAtt is updated and will help dealing with the next attribute.
-          idxOfPrevAtt = idxOfAtt;
-        }
-        else
-        {
-          // The attribute does not exist in the list yet. We're dealing with an optional attribute popping up from nowhere.
-          // We add it at the correct position in the attribute list with a optional cardinality and an appropriate type.
           String[] att = new String[3];
-          att[0] = attName;
-          att[1] = XML2CSVCardinality.ZERO_TO_ONE.getCode();
+          att[0] = atts.getLocalName(i);
+          // By default, a new attribute of an element never met before is supposed mandatory and mono-occurrence and might be set to optional later on.
+          att[1] = XML2CSVCardinality.ONE_TO_ONE.getCode();
+          // The type of the new attribute is guessed from its value.
           att[2] = checkType(atts.getValue(i), typeSniffer(atts.getValue(i))).getCode();
-          if (idxOfPrevAtt == -1) attsList.add(0, att); // The optional new attribute is the first and is placed accordingly.
+          attsList.add(att);
+        }
+        attributes.put(xpath, attsList);
+      }
+      else
+      {
+        // We have already met attributes for the currently parsed element, which has already been met before. It has already an attribute definition list, which we examine now.
+        ArrayList<String[]> attsList = attributes.get(xpath);
+        int idxOfPrevAtt = -1; // Helps to insert a new attribute at its correct place in the list.
+        for (int i = 0; i < atts.getLength(); i++)
+        {
+          // We look for the attribute in the list associated with the element.
+          String attName = atts.getLocalName(i);
+          int idxOfAtt = -1;
+          for (int j = 0; j < attsList.size(); j++)
+          {
+            if (attsList.get(j)[0].equals(attName))
+            {
+              idxOfAtt = j;
+              break;
+            }
+          }
+          if (idxOfAtt != -1)
+          {
+            // The attribute existed already. The type of the attribute is updated. The attribute's cardinality is left unchanged, whatever it is.
+            String[] att = attsList.get(idxOfAtt);
+            att[2] = checkType(atts.getValue(i), XML2CSVType.parse(att[2])).getCode();
+            attsList.set(idxOfAtt, att);
+            // All the attributes between idxOfPrevAtt and idxOfAtt, if any, were not provided for the current element occurrence and should be set to optional.
+            for (int k = idxOfPrevAtt + 1; k < idxOfAtt; k++)
+            {
+              String[] oneAtt = attsList.get(k);
+              oneAtt[1] = XML2CSVCardinality.ZERO_TO_ONE.getCode();
+              attsList.set(k, oneAtt);
+            }
+            // The value of idxOfPrevAtt is updated and will help dealing with the next attribute.
+            idxOfPrevAtt = idxOfAtt;
+          }
           else
           {
-            // The optional new attribute is placed just after the previous attribute (idxOfPrevAtt) or, if the previous attribute
-            // was the last at the end of the list.
-            if (idxOfPrevAtt < attsList.size())
-            {
-              attsList.add(idxOfPrevAtt + 1, att);
-              idxOfPrevAtt = idxOfPrevAtt + 1;
-            }
+            // The attribute does not exist in the list yet. We're dealing with an optional attribute popping up from nowhere.
+            // We add it at the correct position in the attribute list with a optional cardinality and an appropriate type.
+            String[] att = new String[3];
+            att[0] = attName;
+            att[1] = XML2CSVCardinality.ZERO_TO_ONE.getCode();
+            att[2] = checkType(atts.getValue(i), typeSniffer(atts.getValue(i))).getCode();
+            if (idxOfPrevAtt == -1) attsList.add(0, att); // The optional new attribute is the first and is placed accordingly.
             else
             {
-              attsList.add(att);
-              idxOfPrevAtt = attsList.size();
+              // The optional new attribute is placed just after the previous attribute (idxOfPrevAtt) or, if the previous attribute
+              // was the last at the end of the list.
+              if (idxOfPrevAtt < attsList.size())
+              {
+                attsList.add(idxOfPrevAtt + 1, att);
+                idxOfPrevAtt = idxOfPrevAtt + 1;
+              }
+              else
+              {
+                attsList.add(att);
+                idxOfPrevAtt = attsList.size();
+              }
             }
           }
         }
+        attributes.put(xpath, attsList);
       }
-      attributes.put(xpath, attsList);
     }
   }
 
