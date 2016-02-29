@@ -51,6 +51,12 @@ public class XML2CSVGenericGeneratorTest
   /** File used for unleashed maximized optimization test. */
   private File outputFile5 = null;
 
+  /** File used for encoding test. */
+  private File outputFile6a = null;
+
+  /** File used for encoding test. */
+  private File outputFile6b = null;
+
   /** Test Log4J configuration file. */
   private File customLog4JFile = null;
 
@@ -71,6 +77,8 @@ public class XML2CSVGenericGeneratorTest
     Assert.assertNotNull("Test file 3 missing in test resources directory", getClass().getResource("/sample3.xml"));
     Assert.assertNotNull("Test file 4 missing in test resources directory", getClass().getResource("/sample4.xml"));
     Assert.assertNotNull("Test file 5 missing in test resources directory", getClass().getResource("/sample5.xml"));
+    Assert.assertNotNull("Test file 6a missing in test resources directory", getClass().getResource("/sample6a.xml"));
+    Assert.assertNotNull("Test file 6b missing in test resources directory", getClass().getResource("/sample6b.xml"));
     Assert.assertNotNull("Filter file 3 missing in test resources directory", getClass().getResource("/filterFile3.txt"));
     Assert.assertNotNull("Filter file 4 missing in test resources directory", getClass().getResource("/filterFile4.txt"));
     Assert.assertNotNull("Result file 'output1.csv' missing in test resources directory", getClass().getResource("/output1.csv"));
@@ -79,6 +87,8 @@ public class XML2CSVGenericGeneratorTest
     Assert.assertNotNull("Result file 'output3n.csv' missing in test resources directory", getClass().getResource("/output3n.csv"));
     Assert.assertNotNull("Result file 'output4n.csv' missing in test resources directory", getClass().getResource("/output4n.csv"));
     Assert.assertNotNull("Result file 'output5.csv' missing in test resources directory", getClass().getResource("/output5.csv"));
+    Assert.assertNotNull("Result file 'sample6a.csv' missing in test resources directory", getClass().getResource("/sample6a.csv"));
+    Assert.assertNotNull("Result file 'sample6b.csv' missing in test resources directory", getClass().getResource("/sample6b.csv"));
     Assert.assertNotNull("Log4J configuration file in test resources directory", getClass().getResource("/xml2csvlog4j.properties"));
   }
 
@@ -99,6 +109,8 @@ public class XML2CSVGenericGeneratorTest
     outputNegativeFile4 = testFolder.newFile("output4n.csv");
     outputFile5 = testFolder.newFile("output5.csv");
     outputDir = testFolder.newFolder("outputDir");
+    outputFile6a = testFolder.newFile("outputDir/sample6a.csv");
+    outputFile6b = testFolder.newFile("outputDir/sample6b.csv");
     logFile = testFolder.newFile("XML2CSV-Generic-Converter.log"); // Generated at the project's root.
 
     customLog4JFile = new File(getClass().getResource("/xml2csvlog4j.properties").toURI());
@@ -261,6 +273,32 @@ public class XML2CSVGenericGeneratorTest
   }
 
   /**
+   * Tests XML to CSV conversion of two files with different encodings containing both elements, attributes and name spaces.
+   * @throws Exception in case of error.
+   */
+  @Test
+  public void testMultiEncodingsFilesGeneration() throws Exception
+  {
+    File expectedOutputFile6a = new File(getClass().getResource("/sample6a.csv").toURI());
+    File expectedOutputFile6b = new File(getClass().getResource("/sample6b.csv").toURI());
+    File sample6a = new File(getClass().getResource("/sample6a.xml").toURI()); // Provided in UTF-8.
+    File sample6b = new File(getClass().getResource("/sample6b.xml").toURI()); // Provided in UTF-16.
+    File[] inputs = new File[2];
+    inputs[0] = sample6a;
+    inputs[1] = sample6b;
+
+    XML2CSVGenericGenerator generator = new XML2CSVGenericGenerator(null, outputDir);
+    generator.setOptimization(XML2CSVOptimization.EXTENSIVE_V3);
+    generator.setUnleashing(true);
+    generator.setWarding(true);
+    generator.setEncoding(Charset.forName("ISO-8859-1")); // The resulting files are expected in ISO-8859-1 (ISO Latin Alphabet No. 1).
+    generator.generate(inputs, true);
+
+    Assert.assertEquals(FileUtils.readFileToString(expectedOutputFile6a, "ISO-8859-1"), FileUtils.readFileToString(outputFile6a, "ISO-8859-1"));
+    Assert.assertEquals(FileUtils.readFileToString(expectedOutputFile6b, "ISO-8859-1"), FileUtils.readFileToString(outputFile6b, "ISO-8859-1"));
+  }
+
+  /**
    * Deletion of temporary files & directories after the JUnit test runs.
    * @throws Exception in case of error.
    */
@@ -273,6 +311,8 @@ public class XML2CSVGenericGeneratorTest
     outputNegativeFile3.delete();
     outputNegativeFile4.delete();
     outputFile5.delete();
+    outputFile6a.delete();
+    outputFile6b.delete();
     File[] contents = outputDir.listFiles();
     for (int i = 0; i < contents.length; i++)
       contents[i].delete();

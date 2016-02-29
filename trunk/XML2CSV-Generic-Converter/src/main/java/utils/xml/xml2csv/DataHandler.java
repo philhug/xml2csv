@@ -996,8 +996,5 @@ class DataHandler extends DefaultHandler implements LexicalHandler
     rootTag = null;
     textBuffer = null;
     dataBuffer.reset();
-    withAttributes = false;
-    withNamespaces = false;
-    unleashed = false;
   }
 }
