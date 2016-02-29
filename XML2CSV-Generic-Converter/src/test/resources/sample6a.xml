@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Policies xmlns="lib1" xmlns:lib2="lib2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<Sender>
+		<lib2:Code>S6a</lib2:Code>
+		<lib2:Name>Sender #6a</lib2:Name>
+	</Sender>
+	<FileData>
+		<lib2:Identification Issuer="S6" Scheme="POLICYFILE">1006a-1</lib2:Identification>
+		<lib2:CreationDate>2016-03-21T09:00:00.0Z</lib2:CreationDate>
+	</FileData>
+	<Validity>
+		<lib2:FromDate>2016-02-21</lib2:FromDate>
+		<lib2:ToDate>2016-08-20</lib2:ToDate>
+	</Validity>
+	<EmptyIndic>NO</EmptyIndic>
+	<Policy>
+		<Identification>
+			<lib2:Id Issuer="I1" Scheme="POLICY">123456789</lib2:Id>
+		</Identification>
+		<Status>
+			<lib2:Code>ACTIVE</lib2:Code>
+			<lib2:EffectiveDate>2016-02-21</lib2:EffectiveDate>
+		</Status>
+		<LinkedObjects>
+			<lib2:Product>
+				<lib2:Identification>
+					<lib2:Id Issuer="I2" Scheme="PRODUCT">P5</lib2:Id>
+				</lib2:Identification>
+			</lib2:Product>
+			<lib2:Customer>
+				<lib2:Identification>
+					<lib2:Id Issuer="I1" Scheme="THIRDPARTY">C5</lib2:Id>
+				</lib2:Identification>
+				<lib2:Activity>
+					<lib2:CSP>JKL</lib2:CSP>
+				</lib2:Activity>
+				<lib2:BirthDate>1975-09-10</lib2:BirthDate>
+				<lib2:Gender>0</lib2:Gender>
+				<lib2:Rank>2</lib2:Rank>
+			</lib2:Customer>
+		</LinkedObjects>
+		<Data>
+			<lib2:Category>CAT2</lib2:Category>
+			<lib2:ValidityPeriod>
+				<lib2:FromDate>2016-03-21</lib2:FromDate>
+				<lib2:ToDate>2017-03-20</lib2:ToDate>
+			</lib2:ValidityPeriod>
+			<lib2:PremiumType>FF</lib2:PremiumType>
+			<lib2:FirstPaymentDate>2016-03-21</lib2:FirstPaymentDate>
+			<lib2:ActiveIndic>N</lib2:ActiveIndic>
+		</Data>
+		<Item>
+			<lib2:Identification>
+				<lib2:Group>G5</lib2:Group>
+				<lib2:Code>C5</lib2:Code>
+			</lib2:Identification>
+			<lib2:Status>
+				<lib2:Code>ACCE</lib2:Code>
+			</lib2:Status>
+			<lib2:Data>
+				<lib2:LevelRate>55</lib2:LevelRate>
+				<lib2:Count Unit="KILO">3</lib2:Count>
+				<lib2:BaseAmount Curr="SEK">2000</lib2:BaseAmount>
+				<lib2:CurrentAmount Curr="SEK">1800</lib2:CurrentAmount>
+			</lib2:Data>
+		</Item>
+		<Item>
+			<lib2:Identification>
+				<lib2:Group>G7</lib2:Group>
+				<lib2:Code>C5</lib2:Code>
+			</lib2:Identification>
+			<lib2:Status>
+				<lib2:Code>ACCE</lib2:Code>
+			</lib2:Status>
+			<lib2:Data>
+				<lib2:LevelRate>22</lib2:LevelRate>
+				<lib2:Count>789</lib2:Count>
+				<lib2:BaseAmount Curr="USD">1000</lib2:BaseAmount>
+			</lib2:Data>
+		</Item>
+		<Item>
+			<lib2:Identification>
+				<lib2:Group>G9</lib2:Group>
+				<lib2:Code>C1</lib2:Code>
+			</lib2:Identification>
+			<lib2:Status>
+				<lib2:Code>ACCE</lib2:Code>
+			</lib2:Status>
+			<lib2:Data>
+				<lib2:LevelRate>1010</lib2:LevelRate>
+				<lib2:Count Unit="KILO">10</lib2:Count>
+				<lib2:CurrentAmount Curr="EUR">2055</lib2:CurrentAmount>
+			</lib2:Data>
+		</Item>
+		<Line>
+			<lib2:Identification>
+				<lib2:Id Issuer="I1" Scheme="LINE">L3</lib2:Id>
+			</lib2:Identification>
+			<lib2:Data>
+				<lib2:Type>T8</lib2:Type>
+				<lib2:Period>
+					<lib2:FromDate>2016-01-01</lib2:FromDate>
+					<lib2:ToDate>2026-12-31</lib2:ToDate>
+				</lib2:Period>
+				<lib2:AmortizationType>A8</lib2:AmortizationType>
+				<lib2:Duration TimeUnit="SEMESTER">7</lib2:Duration>
+				<lib2:Rate>9</lib2:Rate>
+			</lib2:Data>
+			<lib2:Instalment>
+				<lib2:BalanceAmount Curr="EUR">7000.00</lib2:BalanceAmount>
+				<lib2:InstalmentAmount Curr="EUR">700.00</lib2:InstalmentAmount>
+				<lib2:CalculationDate>2016-05-19</lib2:CalculationDate>
+			</lib2:Instalment>
+		</Line>
+		<Context>
+			<lib2:Origin>PNP456</lib2:Origin>
+			<lib2:CreationDateTime>2016-03-21T09:45:00.0Z</lib2:CreationDateTime>
+		</Context>
+	</Policy>
+	<Policy>
+		<Identification>
+			<lib2:Id Issuer="I1" Scheme="POLICY">1006a-2</lib2:Id>
+		</Identification>
+		<Status>
+			<lib2:Code>ACTIVE</lib2:Code>
+			<lib2:EffectiveDate>2016-06-21</lib2:EffectiveDate>
+		</Status>
+		<LinkedObjects>
+			<lib2:Product>
+				<lib2:Identification>
+					<lib2:Id Issuer="I2" Scheme="PRODUCT">P9</lib2:Id>
+				</lib2:Identification>
+			</lib2:Product>
+			<lib2:Customer>
+				<lib2:Identification>
+					<lib2:Id Issuer="I1" Scheme="THIRDPARTY">C3</lib2:Id>
+				</lib2:Identification>
+				<lib2:Activity>
+					<lib2:CSP>VBN</lib2:CSP>
+				</lib2:Activity>
+				<lib2:BirthDate>1990-01-01</lib2:BirthDate>
+				<lib2:Gender>1</lib2:Gender>
+				<lib2:Rank>4</lib2:Rank>
+			</lib2:Customer>
+		</LinkedObjects>
+		<Data>
+			<lib2:Category>CAT3</lib2:Category>
+			<lib2:ValidityPeriod>
+				<lib2:FromDate>2016-06-15</lib2:FromDate>
+				<lib2:ToDate>2016-06-14</lib2:ToDate>
+			</lib2:ValidityPeriod>
+			<lib2:PremiumType>VV</lib2:PremiumType>
+			<lib2:FirstPaymentDate>2016-06-15</lib2:FirstPaymentDate>
+			<lib2:ActiveIndic>Y</lib2:ActiveIndic>
+		</Data>
+		<Item>
+			<lib2:Identification>
+				<lib2:Group>G8</lib2:Group>
+				<lib2:Code>C8</lib2:Code>
+			</lib2:Identification>
+			<lib2:Status>
+				<lib2:Code>ACCE</lib2:Code>
+			</lib2:Status>
+			<lib2:Data>
+				<lib2:LevelRate>10</lib2:LevelRate>
+				<lib2:Count Unit="KILO">7.7</lib2:Count>
+				<lib2:BaseAmount Curr="EUR">101</lib2:BaseAmount>
+				<lib2:CurrentAmount Curr="EUR">133</lib2:CurrentAmount>
+			</lib2:Data>
+		</Item>
+		<Item>
+			<lib2:Identification>
+				<lib2:Group>G10</lib2:Group>
+				<lib2:Code>C11</lib2:Code>
+			</lib2:Identification>
+			<lib2:Status>
+				<lib2:Code>ACCE</lib2:Code>
+			</lib2:Status>
+			<lib2:Data>
+				<lib2:LevelRate>522</lib2:LevelRate>
+				<lib2:Count>87</lib2:Count>
+				<lib2:BaseAmount Curr="EUR">999</lib2:BaseAmount>
+				<lib2:CurrentAmount Curr="EUR">998</lib2:CurrentAmount>
+			</lib2:Data>
+		</Item>
+		<Line>
+			<lib2:Identification>
+				<lib2:Id Issuer="I1" Scheme="LINE">L12</lib2:Id>
+			</lib2:Identification>
+			<lib2:Data>
+				<lib2:Type>T4</lib2:Type>
+				<lib2:Period>
+					<lib2:FromDate>2016-01-01</lib2:FromDate>
+					<lib2:ToDate>2036-12-31</lib2:ToDate>
+				</lib2:Period>
+				<lib2:AmortizationType>A7</lib2:AmortizationType>
+				<lib2:Duration TimeUnit="WEEK">50</lib2:Duration>
+				<lib2:Rate>2</lib2:Rate>
+			</lib2:Data>
+			<lib2:Instalment>
+				<lib2:BalanceAmount Curr="EUR">1234.00</lib2:BalanceAmount>
+				<lib2:InstalmentAmount Curr="EUR">1230.01</lib2:InstalmentAmount>
+				<lib2:CalculationDate>2016-06-22</lib2:CalculationDate>
+			</lib2:Instalment>
+		</Line>
+		<Context>
+			<lib2:Origin>OO2</lib2:Origin>
+			<lib2:CreationDateTime>2016-05-01T09:50:00.0Z</lib2:CreationDateTime>
+		</Context>
+	</Policy>
+</Policies>
